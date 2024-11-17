@@ -26,21 +26,25 @@ public class LobbyControl {
     }
 
     private void createGame() {
-        String gameName = JOptionPane.showInputDialog(view, 
-            "Enter game name:", 
-            "Create Game", 
-            JOptionPane.PLAIN_MESSAGE);
-            
+        String gameName = JOptionPane.showInputDialog(view,
+                "Enter game name:",
+                "Create Game",
+                JOptionPane.PLAIN_MESSAGE);
+
         if (gameName != null && !gameName.trim().isEmpty()) {
-            Game game = new Game();
-            game.addPlayer(gameName);
             try {
-                client.sendToServer(game);
+                client.sendToServer("CREATE_GAME:" + gameName);
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        } else {
+            JOptionPane.showMessageDialog(view,
+                    "Game name cannot be empty.",
+                    "Invalid Input",
+                    JOptionPane.WARNING_MESSAGE);
         }
     }
+
 
     private void joinGame() {
         String selectedGame = view.getSelectedGame();

@@ -1,30 +1,37 @@
+
 public class CardClass {
     private String suit;
-    private int value;
-    
-    public CardClass(String suit, int value) {
+    private int rank;
+    private static final String image_path = ""; // replace with imae path later
+
+    public CardClass(String suit, int rank) {
         this.suit = suit;
-        this.value = value;
+        this.rank = rank;
     }
-    
+
     public String getSuit() {
         return suit;
     }
-    
-    public int getValue() {
-        return value;
+
+    public int getRank() {
+        return rank;
     }
-    
-    @Override
-    public String toString() {
-        String valueString;
-        switch (value) {
-            case 11: valueString = "Jack"; break;
-            case 12: valueString = "Queen"; break;
-            case 13: valueString = "King"; break;
-            case 14: valueString = "Ace"; break;
-            default: valueString = String.valueOf(value);
+
+
+    // need to replace with actual file path later
+    public String getImage(){
+        String rankString = rankToString(rank).toLowerCase().replace(" ", "_");
+        String subString = suit.toLowerCase();
+        return image_path + rankString + "_of_" + subString + ".png";
+    }
+
+    private String rankToString(int rank){
+        switch (rank){
+            case 11: return "Jack";
+            case 12: return "Queen";
+            case 13: return "King";
+            case 14: return "Ace";
+            default: return String.valueOf(rank);
         }
-        return valueString + " of " + suit;
     }
 }

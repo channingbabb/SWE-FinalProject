@@ -8,14 +8,20 @@ public class Hand {
     }
     
     public void addCard(CardClass card) {
-        cards.add(card);
+        if (cards.size() < 2){
+            cards.add(card);
+        }
     }
     
     public ArrayList<CardClass> getCards() {
-        return cards;
+        return new ArrayList<>(cards);
     }
     
     public void clear() {
+        cards.clear();
+    }
+
+    public void clearHand() {
         cards.clear();
     }
 }
