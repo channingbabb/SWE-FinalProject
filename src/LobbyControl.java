@@ -23,17 +23,40 @@ public class LobbyControl {
         view.getJoinGameButton().addActionListener(e -> joinGame());
         view.getLeaderboardButton().addActionListener(e -> showLeaderboard());
         view.getLogoutButton().addActionListener(e -> logout());
+        view.getRefreshButton().addActionListener(e -> refreshGames());
     }
 
     private void createGame() {
-        String gameName = JOptionPane.showInputDialog(view,
+        if (!client.isConnected()) {
+            JOptionPane.showMessageDialog(view,
+                    "Error: Not connected to server",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        User currentUser = client.getCurrentUser();
+        if (currentUser == null) {
+            JOptionPane.showMessageDialog(view,
+                    "Error: Not logged in",
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        
+        String defaultGameName = currentUser.getUsername() + "-poker";
+        
+        String gameName = (String) JOptionPane.showInputDialog(view,
                 "Enter game name:",
                 "Create Game",
-                JOptionPane.PLAIN_MESSAGE);
+                JOptionPane.PLAIN_MESSAGE,
+                null,
+                null,
+                defaultGameName);
 
         if (gameName != null && !gameName.trim().isEmpty()) {
             try {
-                client.sendToServer("CREATE_GAME:" + gameName);
+                client.sendToServer("CREATE_GAME:" + gameName + ":" + currentUser.getUsername());
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
@@ -47,6 +70,14 @@ public class LobbyControl {
 
 
     private void joinGame() {
+        if (!client.isConnected()) {
+            JOptionPane.showMessageDialog(view,
+                    "Error: Not connected to server",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         String selectedGame = view.getSelectedGame();
         if (selectedGame != null) {
             try {
@@ -63,6 +94,14 @@ public class LobbyControl {
     }
 
     private void showLeaderboard() {
+        if (!client.isConnected()) {
+            JOptionPane.showMessageDialog(view,
+                    "Error: Not connected to server",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         try {
             client.sendToServer("REQUEST_LEADERBOARD");
             
@@ -91,6 +130,22 @@ public class LobbyControl {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        }
+    }
+
+    private void refreshGames() {
+        if (!client.isConnected()) {
+            JOptionPane.showMessageDialog(view,
+                    "Error: Not connected to server",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        try {
+            client.sendToServer("REQUEST_GAMES");
+        } catch (Exception ex) {
+            ex.printStackTrace();
         }
     }
 

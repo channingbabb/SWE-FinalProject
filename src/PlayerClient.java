@@ -5,6 +5,7 @@ public class PlayerClient extends AbstractClient {
     private CreateAccountControl createAccountControl;
     private GameControl gameControl;
     private LobbyControl lobbyControl;
+    private User currentUser;
     
     public PlayerClient(String host, int port) {
         super(host, port);
@@ -12,13 +13,20 @@ public class PlayerClient extends AbstractClient {
     
     @Override
     protected void handleMessageFromServer(Object msg) {
-        if (msg instanceof LoginData) {
+        if (msg instanceof String) {
+            String message = (String) msg;
+            if (message.startsWith("GAME_LIST:")) {
+                String[] games = message.substring(10).split(",");
+                if (message.substring(10).isEmpty()) {
+                    games = new String[0];
+                }
+                lobbyControl.updateGames(games);
+            }
+        } else if (msg instanceof LoginData) {
             loginControl.handleLoginResult((LoginData)msg);
-        } 
-        else if (msg instanceof CreateAccountData) {
+        } else if (msg instanceof CreateAccountData) {
             createAccountControl.handleCreateAccountResult((CreateAccountData)msg);
-        }
-        else if (msg instanceof LeaderboardData) {
+        } else if (msg instanceof LeaderboardData) {
             lobbyControl.updateLeaderboard((LeaderboardData)msg);
         }
     }
@@ -37,5 +45,13 @@ public class PlayerClient extends AbstractClient {
     
     public void setLobbyControl(LobbyControl lobbyControl) {
         this.lobbyControl = lobbyControl;
+    }
+    
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+    }
+    
+    public User getCurrentUser() {
+        return currentUser;
     }
 }

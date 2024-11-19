@@ -8,6 +8,7 @@ public class Game {
     private int currentPlayerIndex;
     private GamePhase phase; // which phase of the game we're in
     private boolean gameInProgress;
+    private String name;
 
     public Game() {
         players = new ArrayList<>();
@@ -18,6 +19,14 @@ public class Game {
         currentPlayerIndex = 0;
         phase = GamePhase.PRE_FLOP;
         gameInProgress = false;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
     }
 
 

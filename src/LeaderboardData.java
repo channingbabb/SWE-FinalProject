@@ -1,6 +1,5 @@
 import java.io.Serializable;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -8,31 +7,38 @@ import java.util.List;
 
 public class LeaderboardData implements Serializable {
     private List<User> users;
-
+    
     public LeaderboardData() {
+        this.users = new ArrayList<>();
     }
     
-    public List<String> getTopUsers() {
-        List<String> topUsers = new ArrayList<>();
+    public void fetchTopUsers(DatabaseClass database) {
         try {
-            Connection connection = DriverManager.getConnection("jdbc:your_database_url", "username", "password");
-            Statement statement = connection.createStatement();
-            String query = "SELECT username FROM users ORDER BY money DESC LIMIT 10";
-            ResultSet resultSet = statement.executeQuery(query);
-
-            while (resultSet.next()) {
-                topUsers.add(resultSet.getString("username"));
+            Connection conn = database.getConnection();
+            Statement stmt = conn.createStatement();
+            String query = "SELECT username, balance FROM poker_users ORDER BY balance DESC";
+            System.out.println("Executing query: " + query);
+            ResultSet rs = stmt.executeQuery(query);
+            
+            users.clear();
+            int count = 0;
+            while (rs.next()) {
+                String username = rs.getString("username");
+                int balance = rs.getInt("balance");
+                users.add(new User(username, balance));
+                count++;
+                System.out.println("Found user: " + username + " with balance: " + balance);
             }
-
-            resultSet.close();
-            statement.close();
-            connection.close();
+            System.out.println("Total users found: " + count);
+            
+            rs.close();
+            stmt.close();
         } catch (Exception e) {
+            System.err.println("Error in fetchTopUsers:");
             e.printStackTrace();
         }
-        return topUsers;
     }
-
+    
     public List<User> toUserList() {
         return new ArrayList<>(users);
     }

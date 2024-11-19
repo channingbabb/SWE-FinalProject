@@ -1,11 +1,12 @@
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 public class LoginPanel extends JPanel {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton submitButton;
     private JButton createAccountButton;
+    private LoginControl controller;
     
     public LoginPanel() {
         setLayout(new GridBagLayout());
@@ -29,7 +30,7 @@ public class LoginPanel extends JPanel {
         
         // Buttons
         submitButton = new JButton("Login");
-        createAccountButton = new JButton("Create Account");
+        createAccountButton = new JButton("Cancel");
         
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(submitButton);
@@ -39,6 +40,10 @@ public class LoginPanel extends JPanel {
         c.gridy = 2;
         c.gridwidth = 2;
         add(buttonPanel, c);
+    }
+    
+    public void setController(LoginControl controller) {
+        this.controller = controller;
     }
     
     public String getUsername() {

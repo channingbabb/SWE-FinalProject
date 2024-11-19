@@ -1,4 +1,4 @@
-public class User {
+public class User implements java.io.Serializable {
     private String username;          // Player's name
     private Hand hand;                // Player's hand (two cards)
     private int balance;              // Player's total money (balance)

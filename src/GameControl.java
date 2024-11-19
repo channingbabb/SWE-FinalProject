@@ -9,6 +9,7 @@ public class GameControl extends CardClass {
     private int pot;
     
     public GameControl(PlayerClient client) {
+        super();
         this.client = client;
         this.gamePanel = new GamePanel();
         this.playerHand = new Hand();

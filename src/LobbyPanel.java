@@ -1,11 +1,12 @@
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 public class LobbyPanel extends JPanel {
     private JButton createGameButton;
     private JButton joinGameButton;
     private JButton leaderboardButton;
     private JButton logoutButton;
+    private JButton refreshButton;
     private JList<String> gamesList;
     private DefaultListModel<String> gamesModel;
     
@@ -16,6 +17,7 @@ public class LobbyPanel extends JPanel {
         joinGameButton = new JButton("Join Game");
         leaderboardButton = new JButton("Leaderboard");
         logoutButton = new JButton("Logout");
+        refreshButton = new JButton("Refresh Games");
         
         gamesModel = new DefaultListModel<>();
         gamesList = new JList<>(gamesModel);
@@ -25,6 +27,7 @@ public class LobbyPanel extends JPanel {
         buttonPanel.add(joinGameButton);
         buttonPanel.add(leaderboardButton);
         buttonPanel.add(logoutButton);
+        buttonPanel.add(refreshButton);
         
         add(new JScrollPane(gamesList), BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
@@ -44,6 +47,10 @@ public class LobbyPanel extends JPanel {
     
     public JButton getLogoutButton() {
         return logoutButton;
+    }
+    
+    public JButton getRefreshButton() {
+        return refreshButton;
     }
     
     public void updateGamesList(String[] games) {

@@ -1,6 +1,6 @@
 import java.io.Serializable;
 
-public class LoginData extends CreateAccountPanel implements Serializable {
+public class LoginData implements Serializable {
     private String username;
     private String password;
     private boolean success;

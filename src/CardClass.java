@@ -1,12 +1,15 @@
-
-public class CardClass {
+public class CardClass implements java.io.Serializable {
     private String suit;
     private int rank;
-    private static final String image_path = ""; // replace with imae path later
+    private static final String image_path = "";
 
     public CardClass(String suit, int rank) {
         this.suit = suit;
         this.rank = rank;
+    }
+
+    public CardClass() {
+
     }
 
     public String getSuit() {

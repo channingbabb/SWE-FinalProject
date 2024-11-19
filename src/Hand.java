@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 
-public class Hand {
+public class Hand implements java.io.Serializable {
     private ArrayList<CardClass> cards;
     
     public Hand() {
