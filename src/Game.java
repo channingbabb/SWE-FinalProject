@@ -38,6 +38,14 @@ public class Game {
     public void setPot(int pot) {
         this.pot = pot;
     }
+    // Getter for currentBet
+    public int getCurrentBet() {
+        return currentBet;
+    }
+    // Setter for currentBet
+    public void setCurrentBet(int currentBet) {
+        this.currentBet = currentBet;
+    }
 
 }
 
