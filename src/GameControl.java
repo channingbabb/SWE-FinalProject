@@ -53,4 +53,9 @@ public class GameControl extends CardClass {
     private void handleCheck() {
         // Implement check logic
     }
+
+    // Add getter for testing purposes
+    public GamePanel getGamePanel() {
+        return gamePanel;
+    }
 }

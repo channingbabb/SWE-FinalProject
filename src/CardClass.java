@@ -28,6 +28,11 @@ public class CardClass implements java.io.Serializable {
         return image_path + rankString + "_of_" + subString + ".png";
     }
 
+    // this fixed names not displaying correctly
+    public String toString() {
+        return rankToString(rank) + " of " + suit;
+    }
+
     private String rankToString(int rank){
         switch (rank){
             case 11: return "Jack";

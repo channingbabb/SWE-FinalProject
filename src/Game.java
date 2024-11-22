@@ -29,6 +29,15 @@ public class Game {
         return name;
     }
 
+    // testing purposes -------------------------
+    // Getter for pot
+    public int getPot() {
+        return pot;
+    }
+    // Setter for pot
+    public void setPot(int pot) {
+        this.pot = pot;
+    }
 
 }
 
