@@ -83,7 +83,6 @@ public class DatabaseClass {
     }
 
     public boolean createNewAccount(String username, String password) {
-        // First check if username exists
         String checkQuery = "SELECT * FROM poker_users WHERE username = ?";
         try (PreparedStatement checkStmt = conn.prepareStatement(checkQuery)) {
             checkStmt.setString(1, username);
@@ -96,7 +95,6 @@ public class DatabaseClass {
             return false;
         }
 
-        // Create new account
         String insertQuery = "INSERT INTO poker_users (username, password) VALUES (?, AES_ENCRYPT(?, 'ucabears!'))";
         try (PreparedStatement pstmt = conn.prepareStatement(insertQuery)) {
             pstmt.setString(1, username);
@@ -111,17 +109,21 @@ public class DatabaseClass {
     }
 
     public User getUser(String username) {
+        System.out.println("Attempting to get user data for: " + username);
         String query = "SELECT username, balance, wins, losses FROM poker_users WHERE username = ?";
         try (PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setString(1, username);
             ResultSet rs = pstmt.executeQuery();
             
             if (rs.next()) {
-                return new User(
+                User user = new User(
                     rs.getString("username"),
                     rs.getInt("balance")
                 );
+                System.out.println("Successfully retrieved user data: " + user.getUsername());
+                return user;
             }
+            System.out.println("No user found with username: " + username);
             return null;
         } catch (SQLException e) {
             System.err.println("Error retrieving user: " + e.getMessage());

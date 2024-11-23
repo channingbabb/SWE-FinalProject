@@ -12,7 +12,6 @@ public class LoginPanel extends JPanel {
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         
-        // Username field
         usernameField = new JTextField(20);
         c.gridx = 1;
         c.gridy = 0;
@@ -20,7 +19,6 @@ public class LoginPanel extends JPanel {
         c.gridx = 2;
         add(usernameField, c);
         
-        // Password field
         passwordField = new JPasswordField(20);
         c.gridx = 1;
         c.gridy = 1;
@@ -28,7 +26,6 @@ public class LoginPanel extends JPanel {
         c.gridx = 2;
         add(passwordField, c);
         
-        // Buttons
         submitButton = new JButton("Login");
         createAccountButton = new JButton("Cancel");
         

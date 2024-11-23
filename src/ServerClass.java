@@ -8,6 +8,8 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ServerClass extends AbstractServer {
     private DatabaseClass database;
@@ -15,6 +17,9 @@ public class ServerClass extends AbstractServer {
     private ChatServer chatServer;
     private JTextArea logArea;
     private ArrayList<ConnectedClient> connectedClients = new ArrayList<>();
+    private ArrayList<String> activeGameNames = new ArrayList<>();
+    private HashMap<String, String> gameCreators = new HashMap<>();
+    private HashMap<String, ArrayList<User>> gameWaitingRooms = new HashMap<>();
     
     public ServerClass(int port) {
         super(port);
@@ -45,11 +50,14 @@ public class ServerClass extends AbstractServer {
             LoginData data = (LoginData)msg;
             boolean success = database.verifyAccount(data.getUsername(), data.getPassword());
             try {
-                client.sendToClient(new LoginData(success));
                 if (success) {
                     User user = database.getUser(data.getUsername());
+                    client.sendToClient(new LoginData(success, user));
+                    client.setInfo("username", user.getUsername());
                     updateClientInfo(client, user.getUsername(), user.getBalance());
                     logToServer("User '" + data.getUsername() + "' logged in successfully");
+                } else {
+                    client.sendToClient(new LoginData(false, null));
                 }
             } catch (Exception e) {
                 e.printStackTrace();
@@ -74,11 +82,123 @@ public class ServerClass extends AbstractServer {
                 if (parts.length >= 3) {
                     String gameName = parts[1];
                     String username = parts[2];
+                    
+                    if (hasActiveGame(username)) {
+                        try {
+                            client.sendToClient("GAME_CREATED:false:You already have an active game");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return;
+                    }
+                    
+                    if (activeGameNames.contains(gameName)) {
+                        try {
+                            client.sendToClient("GAME_CREATED:false:Game name already exists");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        return;
+                    }
+                    
+                    Game newGame = new Game();
+                    newGame.setName(gameName);
+                    activeGames.add(newGame);
+                    activeGameNames.add(gameName);
+                    addGameCreator(gameName, username);
+                    
                     logToServer("New game '" + gameName + "' created by user '" + username + "'");
+                    
+                    try {
+                        client.sendToClient("GAME_CREATED:true:Game created successfully");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    
+                    broadcastGameList();
                 }
             } else if (message.equals("REQUEST_LEADERBOARD")) {
                 logToServer("Leaderboard requested by client " + client.getId());
                 handleLeaderboardRequest(client);
+            } else if (message.equals("REQUEST_GAMES")) {
+                sendGameList(client);
+            } else if (message.startsWith("REQUEST_PLAYERS:")) {
+                String gameName = message.split(":")[1];
+                ArrayList<User> players = gameWaitingRooms.getOrDefault(gameName, new ArrayList<>());
+                try {
+                    client.sendToClient("WAITING_ROOM_PLAYERS:" + gameName + ":" + convertPlayersToString(players));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (message.startsWith("KICK_PLAYER:")) {
+                String playerToKick = message.split(":")[1];
+                handleKickPlayer(playerToKick, client);
+            } else if (message.equals("LEAVE_GAME")) {
+                handlePlayerLeave(client);
+            } else if (message.startsWith("JOIN_GAME:")) {
+                String gameName = message.split(":")[1];
+                String username = (String) client.getInfo("username");
+                
+                if (username == null) {
+                    try {
+                        client.sendToClient("GAME_JOINED:false:Please log in first");
+                        return;
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+                
+                if (!activeGameNames.contains(gameName)) {
+                    try {
+                        client.sendToClient("GAME_JOINED:false:Game no longer exists");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+                
+                User user = database.getUser(username);
+                if (user == null) {
+                    try {
+                        client.sendToClient("GAME_JOINED:false:User data not found");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return;
+                }
+                
+                ArrayList<User> players = gameWaitingRooms.getOrDefault(gameName, new ArrayList<>());
+                players.add(user);
+                gameWaitingRooms.put(gameName, players);
+                
+                boolean isCreator = gameCreators.get(gameName).equals(username);
+                try {
+                    client.sendToClient("GAME_JOINED:true:Successfully joined game:" + gameName + ":" + isCreator);
+                    broadcastWaitingRoomUpdate(gameName);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } else if (message.equals("START_GAME")) {
+                String username = (String) client.getInfo("username");
+                String gameName = getGameNameForPlayer(username);
+                
+                if (gameName != null && gameCreators.get(gameName).equals(username)) {
+                    ArrayList<User> players = gameWaitingRooms.get(gameName);
+                    if (players != null && players.size() >= 2) {
+                        for (User player : players) {
+                            try {
+                                for (ConnectedClient connectedClient : connectedClients) {
+                                    if (connectedClient.getUsername().equals(player.getUsername())) {
+                                        connectedClient.getClient().sendToClient("GAME_STARTED:" + gameName);
+                                    }
+                                }
+                            } catch (IOException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }
+                }
             }
         }
     }
@@ -104,7 +224,6 @@ public class ServerClass extends AbstractServer {
         SwingUtilities.invokeLater(() -> {
             if (logArea != null) {
                 logArea.append(logMessage);
-                // Auto-scroll to bottom
                 logArea.setCaretPosition(logArea.getDocument().getLength());
             }
         });
@@ -124,7 +243,8 @@ public class ServerClass extends AbstractServer {
             client.getId(), 
             null, 
             0, 
-            false
+            false,
+            client
         );
         connectedClients.add(newClient);
         logToServer("Client " + client.getId() + " connected");
@@ -143,6 +263,125 @@ public class ServerClass extends AbstractServer {
                 c.setBalance(balance);
                 c.setAuthenticated(true);
                 break;
+            }
+        }
+    }
+
+    private void broadcastGameList() {
+        String gameList = "GAME_LIST:" + String.join(",", activeGameNames);
+        try {
+            sendToAllClients(gameList);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendGameList(ConnectionToClient client) {
+        String gameList = "GAME_LIST:" + String.join(",", activeGameNames);
+        try {
+            client.sendToClient(gameList);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean hasActiveGame(String username) {
+        return gameCreators.containsValue(username);
+    }
+
+    private void addGameCreator(String gameName, String username) {
+        gameCreators.put(gameName, username);
+    }
+
+    public void removeGameCreator(String gameName) {
+        gameCreators.remove(gameName);
+    }
+
+    private void handleKickPlayer(String playerToKick, ConnectionToClient client) {
+        String gameName = getGameNameForPlayer(playerToKick);
+        if (gameName != null && gameCreators.get(gameName).equals(client.getInfo("username"))) {
+            for (ConnectedClient connectedClient : connectedClients) {
+                if (connectedClient.getUsername().equals(playerToKick)) {
+                    try {
+                        connectedClient.getClient().sendToClient("KICKED_FROM_GAME");
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            removePlayerFromGame(playerToKick, gameName);
+            broadcastWaitingRoomUpdate(gameName);
+        }
+    }
+
+    private void handlePlayerLeave(ConnectionToClient client) {
+        String username = (String) client.getInfo("username");
+        String gameName = getGameNameForPlayer(username);
+        if (gameName != null) {
+            removePlayerFromGame(username, gameName);
+            broadcastWaitingRoomUpdate(gameName);
+        }
+    }
+
+    private void broadcastWaitingRoomUpdate(String gameName) {
+        ArrayList<User> players = gameWaitingRooms.get(gameName);
+        String playersData = convertPlayersToString(players);
+        System.out.println("Broadcasting waiting room update for game: " + gameName);
+        System.out.println("Players data: " + playersData);
+        
+        for (User player : players) {
+            try {
+                for (ConnectedClient connectedClient : connectedClients) {
+                    if (connectedClient.getUsername().equals(player.getUsername())) {
+                        connectedClient.getClient().sendToClient(
+                            "WAITING_ROOM_PLAYERS:" + gameName + ":" + playersData);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private String convertPlayersToString(ArrayList<User> players) {
+        if (players == null || players.isEmpty()) {
+            return "";
+        }
+        
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < players.size(); i++) {
+            User player = players.get(i);
+            sb.append(player.getUsername())
+              .append("|")
+              .append(player.getBalance());
+            if (i < players.size() - 1) {
+                sb.append(",");
+            }
+        }
+        return sb.toString();
+    }
+
+    private String getGameNameForPlayer(String username) {
+        for (Map.Entry<String, ArrayList<User>> entry : gameWaitingRooms.entrySet()) {
+            for (User player : entry.getValue()) {
+                if (player.getUsername().equals(username)) {
+                    return entry.getKey();
+                }
+            }
+        }
+        return null;
+    }
+
+    private void removePlayerFromGame(String username, String gameName) {
+        ArrayList<User> players = gameWaitingRooms.get(gameName);
+        if (players != null) {
+            players.removeIf(player -> player.getUsername().equals(username));
+            
+            if (players.isEmpty()) {
+                gameWaitingRooms.remove(gameName);
+                activeGameNames.remove(gameName);
+                removeGameCreator(gameName);
+                broadcastGameList();
             }
         }
     }

@@ -6,14 +6,11 @@ import javax.swing.*;
 public class LoginControl implements ActionListener {
     private LoginPanel loginPanel;
     private PlayerClient client;
-    private User currentUser;
-    private DatabaseClass database;
     private JPanel container;
     
-    public LoginControl(LoginPanel loginPanel, PlayerClient client, DatabaseClass database, JPanel container) {
+    public LoginControl(LoginPanel loginPanel, PlayerClient client, JPanel container) {
         this.loginPanel = loginPanel;
         this.client = client;
-        this.database = database;
         this.container = container;
         
         loginPanel.getSubmitButton().addActionListener(this);
@@ -23,7 +20,6 @@ public class LoginControl implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if (e.getSource() == loginPanel.getSubmitButton()) {
-            // Validate input fields aren't empty
             if (loginPanel.getUsername().trim().isEmpty() || loginPanel.getPassword().trim().isEmpty()) {
                 JOptionPane.showMessageDialog(loginPanel, 
                     "Please enter both username and password",
@@ -39,43 +35,46 @@ public class LoginControl implements ActionListener {
             try {
                 client.sendToServer(data);
             } catch (Exception ex) {
+                JOptionPane.showMessageDialog(loginPanel,
+                    "Error connecting to server",
+                    "Connection Error",
+                    JOptionPane.ERROR_MESSAGE);
                 ex.printStackTrace();
             }
         } else if (e.getSource() == loginPanel.getCreateAccountButton()) {
-            // Return to initial panel when cancel is clicked
             CardLayout cardLayout = (CardLayout) container.getLayout();
             cardLayout.show(container, "InitialPanel");
         }
     }
     
     public void handleLoginResult(LoginData result) {
+        System.out.println("Handling login result - Success: " + result.isSuccess());
+        if (result.getUser() != null) {
+            System.out.println("User info received: " + result.getUser().getUsername());
+        } else {
+            System.out.println("No user info received");
+        }
+        
         if (result.isSuccess()) {
-            User user = database.getUser(loginPanel.getUsername());
-            client.setCurrentUser(user);
-            currentUser = user;
-            JOptionPane.showMessageDialog(loginPanel, 
-                "You are now logged in as " + currentUser, 
-                "Login Success", 
-                JOptionPane.INFORMATION_MESSAGE);
+            client.setCurrentUser(result.getUser());
+            
+            System.out.println("Setting up lobby panel...");
                     
-            // Create and setup LobbyPanel
             LobbyPanel lobbyPanel = new LobbyPanel();
-            container.add(lobbyPanel, "LobbyPanel");
             LobbyControl lobbyControl = new LobbyControl(lobbyPanel, client, container);
             client.setLobbyControl(lobbyControl);
             
-            // Switch to LobbyPanel
+            container.add(lobbyPanel, "LobbyPanel");
+            
             CardLayout cardLayout = (CardLayout) container.getLayout();
             cardLayout.show(container, "LobbyPanel");
+            
+            System.out.println("Switched to lobby panel");
         } else {
             JOptionPane.showMessageDialog(loginPanel, 
                 "Invalid username or password",
                 "Login Error",
                 JOptionPane.ERROR_MESSAGE);
         }
-    }
-    
-    public User getCurrentUser() {
-        return currentUser;
     }
 }

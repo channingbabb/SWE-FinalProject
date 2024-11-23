@@ -61,6 +61,6 @@ public class LobbyPanel extends JPanel {
     }
     
     public String getSelectedGame() {
-        return gamesList.getSelectedValue();  // Assuming you have a JList named gamesList
+        return gamesList.getSelectedValue();
     }
 }
