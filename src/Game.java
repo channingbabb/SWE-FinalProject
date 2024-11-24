@@ -47,6 +47,12 @@ public class Game {
     	return players.get(currentPlayerIndex);
     }
     
+    private void nextPlayer() {
+    	do {
+    		currentPlayerIndex = currentPlayerIndex++ % players.size();
+    	} while(!players.get(currentPlayerIndex).isActive());
+    }
+    
     public void startGame() {
     	if(players.size() < 2) {
     		//display error message
@@ -58,6 +64,35 @@ public class Game {
     	deck.shuffle();
     	dealer.dealInitialCards(players);
     	changePhases();
+    }
+    
+    public void handleCall(User player) {
+    	//calculate the call amount 
+    	int amount = currentBet - player.getCurrentBet();
+    	
+    	//checking if the player has enough money to call
+    	if (player.getBalance() < amount) {
+    		throw new IllegalArgumentException ("Not enough balance.");
+    	}
+    	
+    	player.updateBalance(amount);
+    	player.setCurrentBet(currentBet);
+    	pot += amount; //update the pot
+    	
+    }
+    
+    public void handleFold(User player) {
+    	//player is inactive and move to the next player
+    	player.fold();
+    	nextPlayer();
+    }
+    
+    public void handleCheck(User player) {
+    	if (player.getCurrentBet() < currentBet) {
+    		throw new IllegalStateException("Not enough money to check.");
+    	}
+    	
+    	nextPlayer();
     }
     
     public void changePhases() {
@@ -79,6 +114,13 @@ public class Game {
     	}
     }
     
+    private void resetBets() {
+    	//bet resets for the next phase 
+    	currentBet = 0;
+    	for (User player : players) {
+    		player.resetCurrentBet();
+    	}
+    }
     public void endGame() {
     	gameInProgress = false;
     }

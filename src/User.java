@@ -44,6 +44,10 @@ public class User implements java.io.Serializable {
     public int getCurrentBet() {
         return currentBet;
     }
+    
+    public void setCurrentBet(int currentBet) {
+    	this.currentBet = currentBet;
+    }
 
     public void placeBet(int amount) {
         if (!isActive) {
