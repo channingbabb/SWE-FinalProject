@@ -19,8 +19,10 @@ public class WaitingRoomControl {
 
     private void setupNetworkListeners() {
         client.addMessageHandler("PLAYER_UPDATE", message -> {
-            List<User> updatedPlayers = message.getPlayers();
-            SwingUtilities.invokeLater(() -> updatePlayers(updatedPlayers));
+            final List<User> players = message.getPlayers().size() > 8 
+                ? message.getPlayers().subList(0, 8) 
+                : message.getPlayers();
+            SwingUtilities.invokeLater(() -> updatePlayers(players));
         });
 
         client.addMessageHandler("GAME_START", message -> {

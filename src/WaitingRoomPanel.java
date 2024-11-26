@@ -58,7 +58,7 @@ public class WaitingRoomPanel extends JPanel {
         }
         
         if (isCreator && startGameButton != null) {
-            startGameButton.setEnabled(players.size() >= 2);
+            startGameButton.setEnabled(players.size() >= 2 && players.size() <= 8);
         }
     }
     

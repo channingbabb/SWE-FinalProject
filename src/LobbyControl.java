@@ -17,6 +17,8 @@ public class LobbyControl {
         this.leaderboardPanel = new LeaderboardPanel();
         
         setupListeners();
+        
+        refreshGames();
     }
 
     private void setupListeners() {

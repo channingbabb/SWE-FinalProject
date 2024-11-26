@@ -1,48 +1,128 @@
+import java.util.List;
 import javax.swing.*;
-import java.awt.event.ActionListener;
 
-public class GameControl extends CardClass {
+public class GameControl {
     private GamePanel gamePanel;
     private PlayerClient client;
-    private Hand playerHand;
-    private int balance;
-    private int pot;
+    private User currentUser;
+    private int currentPot;
     
-    public GameControl(PlayerClient client, String suit, int rank) {
-        super(suit, rank);
+    public GameControl(PlayerClient client, String gameName) {
         this.client = client;
+        this.currentUser = client.getCurrentUser();
         this.gamePanel = new GamePanel(client.getPlayers());
-        this.playerHand = new Hand();
-        this.balance = 1000; // Starting balance
-        this.pot = 0;
         
         setupActionListeners();
+        setupMessageHandlers();
+        
+        gamePanel.updatePlayerBalance(currentUser.getBalance());
+    }
+    
+    private void setupMessageHandlers() {
+        client.addMessageHandler("GAME_STATE", message -> {
+            SwingUtilities.invokeLater(() -> {
+                Message msg = (Message) message;
+                int pot = msg.getPot();
+                List<User> players = msg.getPlayers();
+                updateGameState(pot, players);
+            });
+        });
+        
+        client.addMessageHandler("PLAYER_TURN", message -> {
+            SwingUtilities.invokeLater(() -> {
+                Message msg = (Message) message;
+                String turnPlayer = msg.getTurnPlayer();
+                boolean isYourTurn = turnPlayer.equals(currentUser.getUsername());
+                handlePlayerTurn(isYourTurn);
+            });
+        });
+        
+        client.addMessageHandler("GAME_ACTION_RESULT", message -> {
+            SwingUtilities.invokeLater(() -> {
+                Message msg = (Message) message;
+                boolean success = msg.isSuccess();
+                String errorMessage = msg.getErrorMessage();
+                handleActionResult(success, errorMessage);
+            });
+        });
     }
     
     private void setupActionListeners() {
         gamePanel.addActionListeners(e -> {
             String command = e.getActionCommand();
             try {
+                Message msg = new Message("GAME_ACTION");
                 switch(command) {
                     case "Call":
-                        client.sendToServer("GAME_ACTION:CALL");
+                        msg.setAction("CALL");
+                        client.sendMessage(msg);
                         break;
                     case "Fold":
-                        client.sendToServer("GAME_ACTION:FOLD");
+                        msg.setAction("FOLD");
+                        client.sendMessage(msg);
                         break;
                     case "Raise":
                         String amount = JOptionPane.showInputDialog("Enter raise amount:");
                         if (amount != null && !amount.isEmpty()) {
-                            client.sendToServer("GAME_ACTION:RAISE:" + amount);
+                            try {
+                                int raiseAmount = Integer.parseInt(amount);
+                                if (raiseAmount <= currentUser.getBalance()) {
+                                    msg.setAction("RAISE");
+                                    msg.setAmount(raiseAmount);
+                                    client.sendMessage(msg);
+                                } else {
+                                    JOptionPane.showMessageDialog(gamePanel, 
+                                        "Insufficient funds!", 
+                                        "Error", 
+                                        JOptionPane.ERROR_MESSAGE);
+                                }
+                            } catch (NumberFormatException ex) {
+                                JOptionPane.showMessageDialog(gamePanel,
+                                    "Please enter a valid number",
+                                    "Invalid Input",
+                                    JOptionPane.ERROR_MESSAGE);
+                            }
                         }
                         break;
                     case "Check":
-                        client.sendToServer("GAME_ACTION:CHECK");
+                        msg.setAction("CHECK");
+                        client.sendMessage(msg);
                         break;
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
         });
+    }
+    
+    private void updateGameState(int pot, List<User> players) {
+        currentPot = pot;
+        gamePanel.updatePot(currentPot);
+        gamePanel.updatePlayers(players);
+        
+        for (User player : players) {
+            if (player.getUsername().equals(currentUser.getUsername())) {
+                currentUser = player;
+                gamePanel.updatePlayerBalance(player.getBalance());
+                break;
+            }
+        }
+    }
+    
+    private void handlePlayerTurn(boolean isYourTurn) {
+        gamePanel.setButtonsEnabled(isYourTurn);
+    }
+    
+    private void handleActionResult(boolean success, String errorMessage) {
+        if (!success) {
+            JOptionPane.showMessageDialog(gamePanel,
+                errorMessage,
+                "Action Failed",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    
+    public GamePanel getGamePanel() {
+        return gamePanel;
     }
 }

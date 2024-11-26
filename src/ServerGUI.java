@@ -3,9 +3,14 @@ import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
+import java.net.InetAddress;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
+import java.io.IOException;
 
 public class ServerGUI extends JFrame {
     private JTextField portField;
+    private JTextField serverNameField;
     private JButton startButton;
     private JButton stopButton;
     private JTextArea logArea;
@@ -19,6 +24,7 @@ public class ServerGUI extends JFrame {
         setLayout(new BorderLayout());
 
         JPanel topPanel = new JPanel();
+        serverNameField = new JTextField("Poker Server", 15);
         portField = new JTextField("8300", 10);
         startButton = new JButton("Start Server");
         stopButton = new JButton("Stop Server");
@@ -29,7 +35,7 @@ public class ServerGUI extends JFrame {
         logArea = new JTextArea(10, 50);
         logArea.setEditable(false);
 
-        String[] columnNames = {"Client ID", "Username", "Balance", "Status"};
+        String[] columnNames = {"Client ID", "Username", "Balance", "Status", "Activity"};
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -39,6 +45,8 @@ public class ServerGUI extends JFrame {
         clientsTable = new JTable(tableModel);
         clientsTable.getTableHeader().setReorderingAllowed(false);
 
+        topPanel.add(new JLabel("Server Name:"));
+        topPanel.add(serverNameField);
         topPanel.add(new JLabel("Port:"));
         topPanel.add(portField);
         topPanel.add(startButton);
@@ -84,7 +92,8 @@ public class ServerGUI extends JFrame {
                     client.getClientId(),
                     client.getUsername() != null ? client.getUsername() : "Not logged in",
                     client.getBalance(),
-                    client.isAuthenticated() ? "Authenticated" : "Unauthenticated"
+                    client.isAuthenticated() ? "Authenticated" : "Unauthenticated",
+                    client.getActivity() != null ? client.getActivity() : "Not logged in"
                 });
             }
         }
@@ -93,6 +102,12 @@ public class ServerGUI extends JFrame {
     private void startServer() {
         try {
             int port = Integer.parseInt(portField.getText());
+            String serverName = serverNameField.getText().trim();
+            
+            if (serverName.isEmpty()) {
+                logArea.append("Error: Server name cannot be empty\n");
+                return;
+            }
 
             if (server != null) {
                 try {
@@ -101,27 +116,68 @@ public class ServerGUI extends JFrame {
                 }
             }
             
-            server = new ServerClass(port);
+            server = new ServerClass(port, serverName);
             server.setLogArea(logArea);
             server.listen();
             
-            logArea.append("Server started on port " + port + "\n");
+            InetAddress localHost = InetAddress.getLocalHost();
+            logArea.append("Server '" + serverName + "' started\n");
+            logArea.append("Local IPv4 Address: " + localHost.getHostAddress() + "\n");
+            logArea.append("Port: " + port + "\n");
+            
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
             portField.setEnabled(false);
+            serverNameField.setEnabled(false);
+            
+            startDiscoveryService(port, serverName);
         } catch (Exception e) {
             logArea.append("Error starting server: " + e.getMessage() + "\n");
             e.printStackTrace();
         }
     }
 
+    private void startDiscoveryService(int gamePort, String serverName) {
+        new Thread(() -> {
+            try (DatagramSocket socket = new DatagramSocket(8301)) {
+                byte[] receiveData = new byte[1024];
+                while (!socket.isClosed() && server != null) {
+                    try {
+                        DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
+                        socket.receive(receivePacket);
+                        
+                        String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
+                        if (message.equals("POKER_SERVER_DISCOVERY")) {
+                            String response = gamePort + "|" + serverName;
+                            byte[] sendData = response.getBytes();
+                            DatagramPacket sendPacket = new DatagramPacket(
+                                sendData,
+                                sendData.length,
+                                receivePacket.getAddress(),
+                                receivePacket.getPort()
+                            );
+                            socket.send(sendPacket);
+                        }
+                    } catch (IOException e) {
+                        if (!socket.isClosed()) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
     private void stopServer() {
         try {
             server.close();
-            logArea.append("Server stopped\n");
+            logArea.append("Server '" + server.getServerName() + "' stopped\n");
             startButton.setEnabled(true);
             stopButton.setEnabled(false);
             portField.setEnabled(true);
+            serverNameField.setEnabled(true);
         } catch (Exception e) {
             logArea.append("Error stopping server: " + e.getMessage() + "\n");
         }

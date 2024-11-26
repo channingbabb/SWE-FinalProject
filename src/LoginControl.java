@@ -70,6 +70,11 @@ public class LoginControl implements ActionListener {
             cardLayout.show(container, "LobbyPanel");
             
             System.out.println("Switched to lobby panel");
+            
+            if (container.getTopLevelAncestor() instanceof ClientGUI) {
+                ClientGUI gui = (ClientGUI) container.getTopLevelAncestor();
+                gui.updateUserInfo(result.getUser().getUsername(), result.getUser().getBalance());
+            }
         } else {
             JOptionPane.showMessageDialog(loginPanel, 
                 "Invalid username or password",

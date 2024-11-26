@@ -10,6 +10,7 @@ import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 import java.util.HashMap;
 import java.util.Map;
+import java.net.InetAddress;
 
 public class ServerClass extends AbstractServer {
     private DatabaseClass database;
@@ -20,9 +21,11 @@ public class ServerClass extends AbstractServer {
     private ArrayList<String> activeGameNames = new ArrayList<>();
     private HashMap<String, String> gameCreators = new HashMap<>();
     private HashMap<String, ArrayList<User>> gameWaitingRooms = new HashMap<>();
+    private String serverName;
     
-    public ServerClass(int port) {
+    public ServerClass(int port, String serverName) {
         super(port);
+        this.serverName = serverName;
         activeGames = new ArrayList<>();
         chatServer = new ChatServer();
         
@@ -32,6 +35,10 @@ public class ServerClass extends AbstractServer {
             System.out.println("Warning: Database initialization failed. Running without database.");
             e.printStackTrace();
         }
+    }
+    
+    public String getServerName() {
+        return serverName;
     }
     
     @Override
@@ -55,6 +62,7 @@ public class ServerClass extends AbstractServer {
                     client.sendToClient(new LoginData(success, user));
                     client.setInfo("username", user.getUsername());
                     updateClientInfo(client, user.getUsername(), user.getBalance());
+                    updateClientActivity(client, "Online");
                     logToServer("User '" + data.getUsername() + "' logged in successfully");
                 } else {
                     client.sendToClient(new LoginData(false, null));
@@ -119,8 +127,10 @@ public class ServerClass extends AbstractServer {
                 }
             } else if (message.equals("REQUEST_LEADERBOARD")) {
                 logToServer("Leaderboard requested by client " + client.getId());
+                updateClientActivity(client, "Viewing Leaderboards");
                 handleLeaderboardRequest(client);
             } else if (message.equals("REQUEST_GAMES")) {
+                updateClientActivity(client, "Browsing games");
                 sendGameList(client);
             } else if (message.startsWith("REQUEST_PLAYERS:")) {
                 String gameName = message.split(":")[1];
@@ -138,6 +148,7 @@ public class ServerClass extends AbstractServer {
             } else if (message.startsWith("JOIN_GAME:")) {
                 String gameName = message.split(":")[1];
                 String username = (String) client.getInfo("username");
+                updateClientActivity(client, "Joining game: " + gameName);
                 
                 if (username == null) {
                     try {
@@ -186,15 +197,16 @@ public class ServerClass extends AbstractServer {
                 if (gameName != null && gameCreators.get(gameName).equals(username)) {
                     ArrayList<User> players = gameWaitingRooms.get(gameName);
                     if (players != null && players.size() >= 2) {
+                        String playersData = convertPlayersToString(players);
                         for (User player : players) {
-                            try {
-                                for (ConnectedClient connectedClient : connectedClients) {
-                                    if (connectedClient.getUsername().equals(player.getUsername())) {
-                                        connectedClient.getClient().sendToClient("GAME_STARTED:" + gameName);
+                            for (ConnectedClient connectedClient : connectedClients) {
+                                if (connectedClient.getUsername().equals(player.getUsername())) {
+                                    try {
+                                        connectedClient.getClient().sendToClient("GAME_STARTED:" + gameName + ":" + playersData);
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
                                     }
                                 }
-                            } catch (IOException e) {
-                                e.printStackTrace();
                             }
                         }
                     }
@@ -248,6 +260,11 @@ public class ServerClass extends AbstractServer {
         );
         connectedClients.add(newClient);
         logToServer("Client " + client.getId() + " connected");
+        try {
+            client.sendToClient("SERVER_NAME:" + this.serverName);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -304,6 +321,7 @@ public class ServerClass extends AbstractServer {
                 if (connectedClient.getUsername().equals(playerToKick)) {
                     try {
                         connectedClient.getClient().sendToClient("KICKED_FROM_GAME");
+                        updateClientActivity(connectedClient.getClient(), "Online");
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -319,6 +337,7 @@ public class ServerClass extends AbstractServer {
         String gameName = getGameNameForPlayer(username);
         if (gameName != null) {
             removePlayerFromGame(username, gameName);
+            updateClientActivity(client, "Online");
             broadcastWaitingRoomUpdate(gameName);
         }
     }
@@ -382,6 +401,15 @@ public class ServerClass extends AbstractServer {
                 activeGameNames.remove(gameName);
                 removeGameCreator(gameName);
                 broadcastGameList();
+            }
+        }
+    }
+
+    private void updateClientActivity(ConnectionToClient client, String activity) {
+        for (ConnectedClient connectedClient : connectedClients) {
+            if (connectedClient.getClientId() == client.getId()) {
+                connectedClient.setActivity(activity);
+                break;
             }
         }
     }
