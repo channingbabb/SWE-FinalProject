@@ -29,7 +29,7 @@ public class ClientGUI extends JFrame {
         setTitle("Poker Client");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
-        setPreferredSize(new Dimension(1000, 600));
+        setPreferredSize(new Dimension(1200, 800));
         
         String[] columnNames = {"Server Name", "Address", "Port"};
         serverTableModel = new DefaultTableModel(columnNames, 0) {
