@@ -180,23 +180,38 @@ public class GamePanel extends JPanel {
         int initialWidth = metrics.stringWidth(initial);
         g2d.drawString(initial, x - initialWidth/2, y + metrics.getHeight()/3);
         
-        drawUserCards(g2d, x, y);
+        drawUserCards(g2d, x, y, user.getHand().getCards());
     }
 
-    private void drawUserCards(Graphics2D g2d, int x, int y) {
+    private void drawUserCards(Graphics2D g2d, int x, int y, List<CardClass> cards) {
         int cardWidth = 30;
         int cardHeight = 40;
-        
-        if (cardBackImage != null) {
-            g2d.drawImage(cardBackImage, x - 40, y - 15, cardWidth, cardHeight, null);
-            g2d.drawImage(cardBackImage, x + 10, y - 15, cardWidth, cardHeight, null);
-        } else {
-            g2d.setColor(new Color(220, 220, 220));
-            g2d.fillRect(x - 40, y - 15, cardWidth, cardHeight);
-            g2d.fillRect(x + 10, y - 15, cardWidth, cardHeight);
-            g2d.setColor(Color.GRAY);
-            g2d.drawRect(x - 40, y - 15, cardWidth, cardHeight);
-            g2d.drawRect(x + 10, y - 15, cardWidth, cardHeight);
+
+        for (int i = 0; i < cards.size(); i++){
+            CardClass card = cards.get(i);
+            BufferedImage cardImage = null;
+
+            try{
+                cardImage = ImageIO.read(new File(card.getImage()));
+            } catch (IOException e){
+                System.out.println("Error loading image " + card.getImage());
+            }
+
+            if (cardImage == null){
+                if(cardBackImage != null){
+                    cardImage = cardBackImage;
+                } else {
+                    g2d.setColor(new Color(220, 220, 220));
+                    g2d.fillRect(x + (i * (cardWidth + 10)) - 40, y - 15, cardWidth, cardHeight);
+                    g2d.setColor(Color.GRAY);
+                    g2d.drawRect(x + (i * (cardWidth + 10)) - 40, y - 15, cardWidth, cardHeight);
+                    continue;
+                }
+            }
+            int cardX = x + (i *(cardWidth + 10)) -40;
+            int cardY = y - cardHeight /2;
+            g2d.drawImage(cardImage, cardX, cardY, cardWidth, cardHeight, null);
+
         }
     }
 
