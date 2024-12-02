@@ -55,10 +55,14 @@ public class User implements java.io.Serializable {
             throw new IllegalStateException("Player is inactive and cannot bet.");
         }
         if (amount > balance) {
-            throw new IllegalArgumentException("Not enough balance to place the bet!");
+            throw new IllegalArgumentException("Not enough balance to place the bet! Required: " + 
+                amount + ", Available: " + balance);
         }
+        System.out.println("Player " + username + " placing bet: " + amount + 
+                          " (Current balance: " + balance + ", Current bet: " + currentBet + ")");
         balance -= amount;
         currentBet += amount;
+        System.out.println("New balance: " + balance + ", New current bet: " + currentBet);
     }
 
     public void fold() {

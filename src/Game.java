@@ -64,10 +64,20 @@ public class Game {
     	phase = GamePhase.PRE_FLOP;
     	deck.shuffle();
     	currentPlayerIndex = 0;
+    	pot = 0;
     	
     	for (User player : players) {
     		player.clearHand();
     		System.out.println("Cleared hand for player: " + player.getUsername());
+    		try {
+    			player.updateBalance(-50);
+    			player.setCurrentBet(50);
+    			pot += 50;
+    			System.out.println("Collected $50 from " + player.getUsername() + ". Current pot: $" + pot);
+    		} catch (IllegalArgumentException e) {
+    			System.err.println("Player " + player.getUsername() + " doesn't have enough funds for initial bet");
+    			player.setActive(false);
+    		}
     	}
     	
     	dealer.dealInitialCards(players);
@@ -159,17 +169,26 @@ public class Game {
     }
 
     public void handleRaise(User player, int raiseAmount) {
-        if (player.getUsername().equals(getCurrentPlayerUsername())) {
-            if (raiseAmount > player.getBalance()) {
-                throw new IllegalStateException("Insufficient funds");
-            }
-			player.updateBalance(-raiseAmount);
-			player.setCurrentBet(currentBet + raiseAmount);
-			pot += raiseAmount;
-			nextPlayer();
-        } else {
+        if (!player.getUsername().equals(getCurrentPlayerUsername())) {
             throw new IllegalStateException("Not this player's turn");
         }
+        
+        int callAmount = currentBet - player.getCurrentBet();
+        int totalAmount = callAmount + raiseAmount;
+        
+        if (totalAmount > player.getBalance()) {
+            throw new IllegalStateException("Insufficient funds");
+        }
+        
+        player.placeBet(totalAmount);
+        currentBet = player.getCurrentBet();
+        pot += totalAmount;
+        
+        System.out.println("Player " + player.getUsername() + " raised by " + raiseAmount + 
+                          ". Total bet: " + currentBet + ", Pot: " + pot);
+        
+        nextPlayer();
+        checkPhaseCompletion();
     }
 
     public User findPlayer(String username) {

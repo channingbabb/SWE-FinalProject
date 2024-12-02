@@ -82,11 +82,12 @@ public class PlayerClient extends AbstractClient {
             } else if (message.startsWith("GAME_STARTED:")) {
                 System.out.println("Received GAME_STARTED message: " + message);
                 String[] parts = message.split(":");
-                if (parts.length >= 3) {
+                if (parts.length >= 4) {
                     String gameName = parts[1];
                     String playersData = parts[2];
-                    System.out.println("Game: " + gameName + ", Players data: " + playersData);
-                    handleGameStarted(gameName, playersData);
+                    String currentPlayer = parts[3];
+                    System.out.println("Game: " + gameName + ", Players data: " + playersData + ", Current player turn: " + currentPlayer);
+                    handleGameStarted(gameName, playersData, currentPlayer);
                 }
             } else if (message.startsWith("GAME_STATE:")) {
                 handleGameState(message);
@@ -174,6 +175,16 @@ public class PlayerClient extends AbstractClient {
     }
 
     public void sendMessage(Message message) {
+        try {
+            String actionMessage = "GAME_ACTION:" + message.getAction();
+            if (message.getAmount() > 0) {
+                actionMessage += ":" + message.getAmount();
+            }
+            sendToServer(actionMessage);
+        } catch (IOException e) {
+            System.err.println("Error sending game action: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
     public String getServerName() {
@@ -192,7 +203,7 @@ public class PlayerClient extends AbstractClient {
         return gamePanel;
     }
 
-    public void handleGameStarted(String gameName, String playersData) {
+    public void handleGameStarted(String gameName, String playersData, String currentPlayer) {
         SwingUtilities.invokeLater(() -> {
             try {
                 System.out.println("Creating game panel and control");
@@ -221,7 +232,6 @@ public class PlayerClient extends AbstractClient {
                             }
                             
                             players.add(player);
-                            System.out.println("Added player: " + username + " with " + numCards + " cards");
                         }
                     }
                 }
@@ -235,6 +245,7 @@ public class PlayerClient extends AbstractClient {
                     container.add(gamePanel, "GamePanel");
                     CardLayout cardLayout = (CardLayout) container.getLayout();
                     cardLayout.show(container, "GamePanel");
+                    gamePanel.updateTurnIndicator(currentPlayer);
                     sendToServer("REQUEST_GAME_STATE:" + gameName);
                 }
             } catch (Exception e) {
@@ -245,6 +256,7 @@ public class PlayerClient extends AbstractClient {
     }
 
     private void handleGameState(String message) {
+        System.out.println("Received game state update: " + message);
         String[] parts = message.split(":");
         String gameName = parts[1];
         int pot = Integer.parseInt(parts[2]);

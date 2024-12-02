@@ -268,6 +268,7 @@ public class GamePanel extends JPanel {
         SwingUtilities.invokeLater(() -> {
             potLabel.setText("Current Pot: $" + pot);
             potLabel.repaint();
+            System.out.println("Updated pot display to: $" + pot);  
         });
     }
 

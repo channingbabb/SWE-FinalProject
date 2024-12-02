@@ -210,13 +210,14 @@ public class ServerClass extends AbstractServer {
                         }
                         game.startGame();
                         activeGames.add(game);
+                        
                         broadcastGameState(game);
                         
                         for (User player : players) {
                             sendGameStartedToPlayer(player.getUsername(), gameName, players);
                         }
-                    } else {
-                        System.out.println("Not enough players to start game");
+                        
+                        gameWaitingRooms.remove(gameName);
                     }
                 } else {
                     System.out.println("User not authorized to start game or game not found");
@@ -235,7 +236,9 @@ public class ServerClass extends AbstractServer {
             if (connectedClient.getUsername().equals(username)) {
                 try {
                     String playerData = convertPlayersToString(players, username);
-                    String gameStartedMessage = String.format("GAME_STARTED:%s:%s", gameName, playerData);
+                    String currentPlayer = players.get(0).getUsername();
+                    String gameStartedMessage = String.format("GAME_STARTED:%s:%s:%s", 
+                        gameName, playerData, currentPlayer);
                     connectedClient.getClient().sendToClient(gameStartedMessage);
                     updateClientActivity(connectedClient.getClient(), "Playing in " + gameName);
                 } catch (IOException e) {
@@ -458,6 +461,7 @@ public class ServerClass extends AbstractServer {
 
     private void handleGameAction(String action, ConnectionToClient client) {
         try {
+            System.out.println("Received game action: " + action + " from client: " + client.getId());
             String username = (String) client.getInfo("username");
             Game game = findGameForPlayer(username);
             
@@ -466,30 +470,16 @@ public class ServerClass extends AbstractServer {
                 return;
             }
             
-            processGameAction(action, game, username);
-            broadcastGameState(game);
-            
-        } catch (Exception e) {
-            System.err.println("Error handling game action: " + e.getMessage());
-            e.printStackTrace();
-            try {
-                client.sendToClient("GAME_ERROR:" + e.getMessage());
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
-    }
-
-    private void processGameAction(String action, Game game, String username) {
-        System.out.println("Processing game action: " + action + " from user: " + username);
-        
-        try {
+            String[] actionParts = action.split(":");
+            String actionType = actionParts[0];
             User player = game.findPlayer(username);
+            
             if (player == null) {
-                throw new IllegalStateException("Player not found in game");
+                client.sendToClient("GAME_ERROR:Player not found in game");
+                return;
             }
-
-            switch (action.toUpperCase()) {
+            
+            switch (actionType.toUpperCase()) {
                 case "CHECK":
                     game.handleCheck(player);
                     break;
@@ -503,19 +493,36 @@ public class ServerClass extends AbstractServer {
                     break;
                     
                 case "RAISE":
-                    game.handleRaise(player, 10);
+                    if (actionParts.length < 2) {
+                        client.sendToClient("GAME_ERROR:No raise amount specified");
+                        return;
+                    }
+                    try {
+                        int raiseAmount = Integer.parseInt(actionParts[1]);
+                        System.out.println("Processing raise of " + raiseAmount + " from player " + username);
+                        game.handleRaise(player, raiseAmount);
+                        System.out.println("Raise processed successfully");
+                    } catch (NumberFormatException e) {
+                        client.sendToClient("GAME_ERROR:Invalid raise amount");
+                        return;
+                    }
                     break;
                     
                 default:
-                    throw new IllegalArgumentException("Unknown action: " + action);
+                    client.sendToClient("GAME_ERROR:Invalid action: " + actionType);
+                    return;
             }
             
             broadcastGameState(game);
             
         } catch (Exception e) {
-            System.err.println("Error processing game action: " + e.getMessage());
+            System.err.println("Error handling game action: " + e.getMessage());
             e.printStackTrace();
-            throw e;
+            try {
+                client.sendToClient("GAME_ERROR:" + e.getMessage());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
         }
     }
 

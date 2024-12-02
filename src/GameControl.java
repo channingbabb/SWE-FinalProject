@@ -69,29 +69,33 @@ public class GameControl {
         gamePanel.addActionListeners(e -> {
             String command = e.getActionCommand();
             try {
-                Message msg = new Message("GAME_ACTION");
                 switch(command) {
                     case "Call":
-                        msg.setAction("CALL");
-                        client.sendMessage(msg);
+                        System.out.println("Sending CALL action to server");
+                        client.sendToServer("GAME_ACTION:CALL");
                         break;
                     case "Fold":
-                        msg.setAction("FOLD");
-                        client.sendMessage(msg);
+                        client.sendToServer("GAME_ACTION:FOLD");
                         break;
                     case "Raise":
                         String amount = JOptionPane.showInputDialog("Enter raise amount:");
                         if (amount != null && !amount.isEmpty()) {
                             try {
                                 int raiseAmount = Integer.parseInt(amount);
-                                if (raiseAmount <= currentUser.getBalance()) {
-                                    msg.setAction("RAISE");
-                                    msg.setAmount(raiseAmount);
-                                    client.sendMessage(msg);
+                                if (raiseAmount > 0) {
+                                    if (raiseAmount <= currentUser.getBalance()) {
+                                        System.out.println("Sending raise action: " + raiseAmount);
+                                        client.sendToServer("GAME_ACTION:RAISE:" + raiseAmount);
+                                    } else {
+                                        JOptionPane.showMessageDialog(gamePanel, 
+                                            "Insufficient funds!", 
+                                            "Error", 
+                                            JOptionPane.ERROR_MESSAGE);
+                                    }
                                 } else {
-                                    JOptionPane.showMessageDialog(gamePanel, 
-                                        "Insufficient funds!", 
-                                        "Error", 
+                                    JOptionPane.showMessageDialog(gamePanel,
+                                        "Raise amount must be greater than 0",
+                                        "Invalid Input",
                                         JOptionPane.ERROR_MESSAGE);
                                 }
                             } catch (NumberFormatException ex) {
@@ -103,12 +107,15 @@ public class GameControl {
                         }
                         break;
                     case "Check":
-                        msg.setAction("CHECK");
-                        client.sendMessage(msg);
+                        client.sendToServer("GAME_ACTION:CHECK");
                         break;
                 }
             } catch (Exception ex) {
                 ex.printStackTrace();
+                JOptionPane.showMessageDialog(gamePanel,
+                    "Error performing action: " + ex.getMessage(),
+                    "Error",
+                    JOptionPane.ERROR_MESSAGE);
             }
         });
     }
