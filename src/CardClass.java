@@ -1,7 +1,7 @@
 public class CardClass implements java.io.Serializable {
     private String suit;
     private int rank;
-    private static final String IMAGE_PATH = "cards/";
+    private static final String IMAGE_PATH = "assets/cards/";
 
     public CardClass(String suit, int rank) {
         this.suit = suit;
@@ -33,5 +33,10 @@ public class CardClass implements java.io.Serializable {
             case 14: return "ace";
             default: return String.valueOf(rank);
         }
+    }
+
+    @Override
+    public String toString() {
+        return rankToString(rank) + " of " + suit;
     }
 }

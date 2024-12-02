@@ -187,8 +187,11 @@ public class GamePanel extends JPanel {
         int cardWidth = 30;
         int cardHeight = 40;
 
+        System.out.println("Length of cards: " + cards.size());
+
         for (int i = 0; i < cards.size(); i++){
             CardClass card = cards.get(i);
+            System.out.println("Drawing card: " + card.getImage());
             BufferedImage cardImage = null;
 
             try{
@@ -252,5 +255,9 @@ public class GamePanel extends JPanel {
         foldButton.setEnabled(enabled);
         raiseButton.setEnabled(enabled);
         checkButton.setEnabled(enabled);
+    }
+
+    public void refresh() {
+        repaint();
     }
 }

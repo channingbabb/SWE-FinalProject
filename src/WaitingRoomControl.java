@@ -25,7 +25,7 @@ public class WaitingRoomControl {
             SwingUtilities.invokeLater(() -> updatePlayers(players));
         });
 
-        client.addMessageHandler("GAME_START", message -> {
+        client.addMessageHandler("GAME_STARTED", message -> {
             SwingUtilities.invokeLater(this::startGame);
         });
 

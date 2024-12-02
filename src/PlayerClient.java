@@ -19,6 +19,7 @@ public class PlayerClient extends AbstractClient {
     private String username;
     private Map<String, Consumer<Message>> messageHandlers;
     private String serverName;
+    private GamePanel gamePanel;
 
     public PlayerClient(String host, int port) throws IOException {
         super(host, port);
@@ -78,30 +79,38 @@ public class PlayerClient extends AbstractClient {
                     lobbyControl.handleGameJoined(success, resultMessage, null, false);
                 }
             } else if (message.startsWith("GAME_STARTED:")) {
+                System.out.println("Received GAME_STARTED message");
                 String[] parts = message.split(":");
                 if (parts.length >= 3) {
                     String gameName = parts[1];
                     String playersData = parts[2];
+                    System.out.println("Game: " + gameName + ", Players data: " + playersData);
                     List<User> gamePlayers = parsePlayersData(playersData);
                     
-                    System.out.println("Game started with players: " + gamePlayers.size());
+                    System.out.println("Parsed " + gamePlayers.size() + " players for game");
                     for (User player : gamePlayers) {
-                        System.out.println("Player: " + player.getUsername() + " Balance: " + player.getBalance());
+                        System.out.println("Player in game: " + player.getUsername() + " Balance: " + player.getBalance());
                     }
                     
                     SwingUtilities.invokeLater(() -> {
+                        System.out.println("Creating game panel and control");
                         GamePanel gamePanel = new GamePanel(gamePlayers);
+                        setGamePanel(gamePanel);
                         GameControl gameControl = new GameControl(this, gameName);
                         setGameControl(gameControl);
                         
                         if (container != null) {
+                            System.out.println("Adding game panel to container");
                             container.add(gamePanel, "GamePanel");
                             CardLayout cardLayout = (CardLayout) container.getLayout();
                             cardLayout.show(container, "GamePanel");
+                            System.out.println("Switched to game panel");
                         } else {
                             System.err.println("Error: Container is null when trying to start game");
                         }
                     });
+                } else {
+                    System.err.println("Invalid GAME_STARTED message format");
                 }
             }
         } else if (msg instanceof LoginData) {
@@ -182,5 +191,13 @@ public class PlayerClient extends AbstractClient {
 
     public void setServerName(String serverName) {
         this.serverName = serverName;
+    }
+
+    public void setGamePanel(GamePanel panel) {
+        this.gamePanel = panel;
+    }
+
+    public GamePanel getGamePanel() {
+        return gamePanel;
     }
 }

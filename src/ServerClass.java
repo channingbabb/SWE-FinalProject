@@ -193,23 +193,43 @@ public class ServerClass extends AbstractServer {
             } else if (message.equals("START_GAME")) {
                 String username = (String) client.getInfo("username");
                 String gameName = getGameNameForPlayer(username);
+                System.out.println("START_GAME received from: " + username + " for game: " + gameName);
                 
                 if (gameName != null && gameCreators.get(gameName).equals(username)) {
                     ArrayList<User> players = gameWaitingRooms.get(gameName);
+                    System.out.println("Found " + players.size() + " players in waiting room");
+                    
                     if (players != null && players.size() >= 2) {
+                        Game game = new Game();
+                        game.setName(gameName);
+                        for (User player : players) {
+                            game.addPlayer(player);
+                            System.out.println("Added player to game: " + player.getUsername());
+                        }
+                        game.startGame();
+                        System.out.println("Game started successfully");
+                        
                         String playersData = convertPlayersToString(players);
+                        System.out.println("Broadcasting to players: " + playersData);
+                        
                         for (User player : players) {
                             for (ConnectedClient connectedClient : connectedClients) {
                                 if (connectedClient.getUsername().equals(player.getUsername())) {
                                     try {
+                                        System.out.println("Sending GAME_STARTED to: " + player.getUsername());
                                         connectedClient.getClient().sendToClient("GAME_STARTED:" + gameName + ":" + playersData);
                                     } catch (IOException e) {
+                                        System.err.println("Error sending game start to " + player.getUsername());
                                         e.printStackTrace();
                                     }
                                 }
                             }
                         }
+                    } else {
+                        System.out.println("Not enough players to start game");
                     }
+                } else {
+                    System.out.println("User not authorized to start game or game not found");
                 }
             }
         }

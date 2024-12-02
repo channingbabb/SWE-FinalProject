@@ -10,6 +10,7 @@ public class Game {
     private boolean gameInProgress;
     private String name;
     private DeckClass deck;
+    private GamePanel gamePanel;
 
     public Game() {
         players = new ArrayList<>();
@@ -55,15 +56,31 @@ public class Game {
     
     public void startGame() {
     	if(players.size() < 2) {
-    		//display error message
+    		System.out.println("Cannot start game: Not enough players");
     		return;
     	}
     	
+    	System.out.println("Starting game with " + players.size() + " players");
     	gameInProgress = true;
     	phase = GamePhase.PRE_FLOP;
     	deck.shuffle();
+    	
+    	for (User player : players) {
+    		player.clearHand();
+    		System.out.println("Cleared hand for player: " + player.getUsername());
+    	}
+    	
     	dealer.dealInitialCards(players);
+    	System.out.println("Initial cards dealt to all players");
+    	
+    	for (User player : players) {
+    		System.out.println("Player " + player.getUsername() + " cards: " + player.getHand().toString());
+    	}
+    	
+    	gamePanel.refresh();
+    	
     	changePhases();
+    	System.out.println("Game phase changed to: " + phase);
     }
     
     public void handleCall(User player) {
@@ -123,6 +140,14 @@ public class Game {
     }
     public void endGame() {
     	gameInProgress = false;
+    }
+
+    public void addPlayer(User player) {
+        if (players == null) {
+            players = new ArrayList<>();
+        }
+        players.add(player);
+        player.setActive(true);
     }
 
 }

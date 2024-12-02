@@ -240,9 +240,12 @@ public class LobbyControl {
     }
 
     private void startGame() {
+        System.out.println("Start game button clicked");
         try {
             client.sendToServer("START_GAME");
+            System.out.println("Sent START_GAME to server");
         } catch (Exception ex) {
+            System.err.println("Error sending START_GAME to server");
             ex.printStackTrace();
             JOptionPane.showMessageDialog(waitingRoomPanel,
                 "Error starting game",

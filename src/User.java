@@ -8,6 +8,7 @@ public class User implements java.io.Serializable {
     public User(String username, int startingBalance) {
         this.username = username;
         this.hand = new Hand();
+        System.out.println("Created new hand for user: " + username);
         this.balance = startingBalance;
         this.isActive = true;
         this.currentBet = 0;

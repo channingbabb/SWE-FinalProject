@@ -10,7 +10,7 @@ public class GameControl {
     public GameControl(PlayerClient client, String gameName) {
         this.client = client;
         this.currentUser = client.getCurrentUser();
-        this.gamePanel = new GamePanel(client.getPlayers());
+        this.gamePanel = client.getGamePanel();
         
         setupActionListeners();
         setupMessageHandlers();
