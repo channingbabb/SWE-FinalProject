@@ -2,6 +2,7 @@ public class CardClass implements java.io.Serializable {
     private String suit;
     private int rank;
     private static final String IMAGE_PATH = "assets/cards/";
+    private static final long serialVersionUID=1L;
 
     public CardClass(String suit, int rank) {
         this.suit = suit;

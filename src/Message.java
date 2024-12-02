@@ -12,6 +12,7 @@ public class Message implements Serializable {
     private boolean success;
     private String errorMessage;
     private int amount;
+    private byte[] serializedData;
 
     public Message(String type) {
         this.type = type;
@@ -83,5 +84,13 @@ public class Message implements Serializable {
 
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+    
+    public byte[] getSerializedData() {
+    	return serializedData;
+    }
+    
+    public void setSerializedData(byte[] serializedData) {
+    	this.serializedData = serializedData;
     }
 } 

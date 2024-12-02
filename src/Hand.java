@@ -19,6 +19,10 @@ public class Hand implements java.io.Serializable {
         return new ArrayList<>(cards);
     }
     
+    public void setCards(ArrayList<CardClass> cards) {
+    	this.cards = cards;
+    }
+    
     public void clear() {
         cards.clear();
     }

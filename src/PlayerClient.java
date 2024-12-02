@@ -1,4 +1,5 @@
 import ocsf.client.AbstractClient;
+
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
@@ -6,7 +7,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.function.Consumer;
-import java.io.IOException;
+import java.io.*;
 
 public class PlayerClient extends AbstractClient {
     private LoginControl loginControl;
@@ -93,8 +94,17 @@ public class PlayerClient extends AbstractClient {
                     }
                     
                     handleGameStarted(gameName, gamePlayers);
-                } else {
+                } 
+                else {
                     System.err.println("Invalid GAME_STARTED message format");
+                }
+                
+                if (msg instanceof Message) { 
+                	System.out.println("Checking for msg: " + msg);
+                	if("PLAYER_HAND".equals(((Message) msg).getType())) {
+                	handlePlayerHand((Message) msg);
+                	System.out.println("handlePlayerHand is called in PlayerClient");
+                }
                 }
             }
         } else if (msg instanceof LoginData) {
@@ -209,5 +219,29 @@ public class PlayerClient extends AbstractClient {
                 e.printStackTrace();
             }
         });
+    }
+    public void handlePlayerHand(Message message) {
+    try {
+    	byte[] serializedData = message.getSerializedData();
+    	if (serializedData == null || serializedData.length == 0) {
+            System.err.println("Received empty or invalid card data.");
+            return;
+        }
+    	
+    	ByteArrayInputStream bais = new ByteArrayInputStream(serializedData);
+    	ObjectInputStream ois = new ObjectInputStream(bais);
+    	
+    	//Deserializing the cards
+    	ArrayList<CardClass> cards = (ArrayList<CardClass>) ois.readObject();
+    	System.out.println("Received the deserialized cards: " + cards);
+    	
+    	if(gamePanel != null) {
+    		players.get(0).getHand().setCards(cards);
+    		gamePanel.refresh();
+    	}
+    } catch (IOException | ClassNotFoundException e) {
+    	System.out.println("Error deserializing cards: " + e.getMessage());
+    	e.printStackTrace();
+    }
     }
 }

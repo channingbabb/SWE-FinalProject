@@ -3,6 +3,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -184,39 +185,52 @@ public class GamePanel extends JPanel {
     }
 
     private void drawUserCards(Graphics2D g2d, int x, int y, List<CardClass> cards) {
-        int cardWidth = 30;
-        int cardHeight = 40;
-
-        System.out.println("Length of cards: " + cards.size());
-
-        for (int i = 0; i < cards.size(); i++){
-            CardClass card = cards.get(i);
-            System.out.println("Drawing card: " + card.getImage());
-            BufferedImage cardImage = null;
-
-            try{
-                cardImage = ImageIO.read(new File(card.getImage()));
-            } catch (IOException e){
-                System.out.println("Error loading image " + card.getImage());
-            }
-
-            if (cardImage == null){
-                if(cardBackImage != null){
-                    cardImage = cardBackImage;
-                } else {
-                    g2d.setColor(new Color(220, 220, 220));
-                    g2d.fillRect(x + (i * (cardWidth + 10)) - 40, y - 15, cardWidth, cardHeight);
-                    g2d.setColor(Color.GRAY);
-                    g2d.drawRect(x + (i * (cardWidth + 10)) - 40, y - 15, cardWidth, cardHeight);
-                    continue;
-                }
-            }
-            int cardX = x + (i *(cardWidth + 10)) -40;
-            int cardY = y - cardHeight /2;
-            g2d.drawImage(cardImage, cardX, cardY, cardWidth, cardHeight, null);
-
+    	 int cardWidth = 30;
+         int cardHeight = 40;
+         
+         if (cardBackImage != null) {
+             g2d.drawImage(cardBackImage, x - 40, y - 15, cardWidth, cardHeight, null);
+             g2d.drawImage(cardBackImage, x + 10, y - 15, cardWidth, cardHeight, null);
+         } else {
+             g2d.setColor(new Color(220, 220, 220));
+             g2d.fillRect(x - 40, y - 15, cardWidth, cardHeight);
+             g2d.fillRect(x + 10, y - 15, cardWidth, cardHeight);
+             g2d.setColor(Color.GRAY);
+             g2d.drawRect(x - 40, y - 15, cardWidth, cardHeight);
+             g2d.drawRect(x + 10, y - 15, cardWidth, cardHeight);
         }
+         
+         drawPlayerHand(g2d, cards, getWidth() / 2 - (cards.size() * (cardWidth + 10)) / 2, getHeight() - 100, cardWidth, cardHeight);
     }
+    
+    private void drawPlayerHand(Graphics2D g2d, List<CardClass> cards, int x, int y, int cardWidth, int cardHeight) {
+    	int handWidth = 60;
+    	int handHeight = 90;
+    	
+    	for (int i = 0; i < cards.size(); i++) {
+    		CardClass card = cards.get(i);
+    		BufferedImage handImage = null;
+    	
+	    	try {
+	    		handImage = ImageIO.read(new File(card.getImage()));
+	    	} catch(IOException e) {
+	    		System.err.println("Failed to load hand image: " + card.getImage() + ". Using placeholder.");
+	    	}
+	    	if (handImage == null) {
+	    		// Draw placeholder card if image not found
+	            g2d.setColor(new Color(220, 220, 220));
+	            g2d.fillRect(x + (i * (handWidth + 10)), y, handWidth, handHeight);
+	            g2d.setColor(Color.GRAY);
+	            g2d.drawRect(x + (i * (handWidth + 10)), y, handWidth, handHeight);
+	            g2d.setColor(Color.BLACK);
+	            g2d.drawString("?", x + (i * (handWidth + 10)) + handWidth / 2 - 5, y + handHeight / 2 + 5);
+	        } else {
+	            // Draw the card image
+	            g2d.drawImage(handImage, x + (i * (handWidth + 10)), y, handWidth, handHeight, null);
+	        }
+	    	}
+    	}
+    
 
     private void drawDealerButton(Graphics2D g2d) {
         double scaleX = (double) getWidth() / REFERENCE_WIDTH;

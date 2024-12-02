@@ -1,4 +1,6 @@
 import java.util.ArrayList;
+import java.util.Map;
+import java.io.*;
 public class Game {
     private ArrayList<User> players; // all players in the game
     private ArrayList<CardClass> communityCards;
@@ -53,7 +55,7 @@ public class Game {
     	} while(!players.get(currentPlayerIndex).isActive());
     }
     
-    public void startGame() {
+    public void startGame(Map<String, PlayerClient> playerClients) {
     	if(players.size() < 2) {
     		System.out.println("Cannot start game: Not enough players");
     		return;
@@ -73,7 +75,13 @@ public class Game {
     	System.out.println("Initial cards dealt to all players");
     	
     	for (User player : players) {
-    		System.out.println("Player " + player.getUsername() + " cards: " + player.getHand().toString());
+    		PlayerClient client = playerClients.get(player.getUsername());
+    		if(client != null) {
+    			System.out.println("Player " + player.getUsername() + " cards: " + player.getHand().toString());
+    			sendPlayerCards(player, client);
+    		} else {
+    			System.err.println("No client found for player: " + player.getUsername());
+    		}
     	}
     	
     	changePhases();
@@ -92,6 +100,25 @@ public class Game {
     		nextPlayer();
     	} else {
     		throw new IllegalStateException("Not this player's turn");
+    	}
+    }
+    
+    public void sendPlayerCards(User player, PlayerClient playerClient) {
+    	try {
+    		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    		ObjectOutputStream oos = new ObjectOutputStream(baos);
+    		
+    		oos.writeObject(player.getHand().getCards());
+    		oos.flush();
+    		byte[] serializedCards = baos.toByteArray();
+    		
+    		Message cardMessage = new Message("PLAYER_HAND");
+    		cardMessage.setSerializedData(serializedCards);
+    		playerClient.sendToServer(cardMessage);
+    		System.out.println("Sent cards to player: " + player.getUsername());
+    	} catch (IOException e) {
+    		System.out.println("Error sendin cards to player: " + player.getUsername());
+    		e.printStackTrace();
     	}
     }
     

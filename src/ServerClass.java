@@ -22,6 +22,8 @@ public class ServerClass extends AbstractServer {
     private HashMap<String, String> gameCreators = new HashMap<>();
     private HashMap<String, ArrayList<User>> gameWaitingRooms = new HashMap<>();
     private String serverName;
+
+    private Map<String, PlayerClient> playerClientsMap = new HashMap<>();
     
     public ServerClass(int port, String serverName) {
         super(port);
@@ -202,11 +204,14 @@ public class ServerClass extends AbstractServer {
                     if (players != null && players.size() >= 2) {
                         Game game = new Game();
                         game.setName(gameName);
+                        
                         for (User player : players) {
+                        	PlayerClient playerClient = findPlayerClientByUsername(player.getUsername());
                             game.addPlayer(player);
+                            playerClientsMap.put(player.getUsername(), playerClient);
                             System.out.println("Added player to game: " + player.getUsername());
                         }
-                        game.startGame();
+                        game.startGame(playerClientsMap);
                         System.out.println("Game started successfully");
                         
                         String playersData = convertPlayersToString(players);
@@ -218,6 +223,7 @@ public class ServerClass extends AbstractServer {
                                     try {
                                         System.out.println("Sending GAME_STARTED to: " + player.getUsername());
                                         connectedClient.getClient().sendToClient("GAME_STARTED:" + gameName + ":" + playersData);
+                                        System.out.println(player.getUsername() + "'s cards: " + player.getHand().getCards());
                                     } catch (IOException e) {
                                         System.err.println("Error sending game start to " + player.getUsername());
                                         e.printStackTrace();
@@ -237,6 +243,10 @@ public class ServerClass extends AbstractServer {
             }
         }
     }
+    private PlayerClient findPlayerClientByUsername(String username) {
+    	 return playerClientsMap.get(username);
+    }
+
     
     private void handleLeaderboardRequest(ConnectionToClient client) {
         try {
