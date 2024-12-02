@@ -231,6 +231,9 @@ public class ServerClass extends AbstractServer {
                 } else {
                     System.out.println("User not authorized to start game or game not found");
                 }
+            } else if (message.startsWith("GAME_ACTION:")) {
+                String action = message.split(":")[1];
+                handleGameAction(action, client);
             }
         }
     }
@@ -432,5 +435,128 @@ public class ServerClass extends AbstractServer {
                 break;
             }
         }
+    }
+
+    private void handleGameAction(String action, ConnectionToClient client) {
+        try {
+            String username = (String) client.getInfo("username");
+            Game game = findGameForPlayer(username);
+            
+            if (game == null) {
+                client.sendToClient("GAME_ERROR:Game not found");
+                return;
+            }
+            
+            processGameAction(action, game, username);
+            broadcastGameState(game);
+            
+        } catch (Exception e) {
+            System.err.println("Error handling game action: " + e.getMessage());
+            e.printStackTrace();
+            try {
+                client.sendToClient("GAME_ERROR:" + e.getMessage());
+            } catch (IOException ex) {
+                ex.printStackTrace();
+            }
+        }
+    }
+
+    private void processGameAction(String action, Game game, String username) {
+        System.out.println("Processing game action: " + action + " from user: " + username);
+        
+        try {
+            User player = game.findPlayer(username);
+            if (player == null) {
+                throw new IllegalStateException("Player not found in game");
+            }
+
+            switch (action.toUpperCase()) {
+                case "CHECK":
+                    game.handleCheck(player);
+                    break;
+                    
+                case "FOLD":
+                    game.handleFold(player);
+                    break;
+                    
+                case "CALL":
+                    game.handleCall(player);
+                    break;
+                    
+                case "RAISE":
+                    game.handleRaise(player, 10);
+                    break;
+                    
+                default:
+                    throw new IllegalArgumentException("Unknown action: " + action);
+            }
+            
+            broadcastGameState(game);
+            
+        } catch (Exception e) {
+            System.err.println("Error processing game action: " + e.getMessage());
+            e.printStackTrace();
+            throw e;
+        }
+    }
+
+    private void broadcastGameState(Game game) {
+        String gameState = createGameStateMessage(game);
+        for (User player : game.getPlayers()) {
+            try {
+                for (ConnectedClient connectedClient : connectedClients) {
+                    if (connectedClient.getUsername().equals(player.getUsername())) {
+                        connectedClient.getClient().sendToClient(gameState);
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private Game findGameForPlayer(String username) {
+        for (Game game : activeGames) {
+            for (User player : game.getPlayers()) {
+                if (player.getUsername().equals(username)) {
+                    return game;
+                }
+            }
+        }
+        return null;
+    }
+
+    private String createGameStateMessage(Game game) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("GAME_STATE:");
+        sb.append(game.getName()).append(":");
+        sb.append(game.getPot()).append(":");
+        sb.append(game.getCurrentBet()).append(":");
+        sb.append(game.getCurrentPlayerUsername()).append(":");
+        
+        ArrayList<CardClass> communityCards = game.getCommunityCards();
+        sb.append(communityCards.size()).append(":");
+        for (CardClass card : communityCards) {
+            sb.append(card.getSuit()).append(",")
+              .append(card.getRank()).append("|");
+        }
+        sb.append(":");
+        
+        for (User player : game.getPlayers()) {
+            sb.append(player.getUsername()).append(",")
+              .append(player.getBalance()).append(",")
+              .append(player.getCurrentBet()).append(",")
+              .append(player.isActive());
+            
+            ArrayList<CardClass> playerCards = player.getHand().getCards();
+            sb.append(",").append(playerCards.size());
+            for (CardClass card : playerCards) {
+                sb.append(",").append(card.getSuit())
+                  .append(",").append(card.getRank());
+            }
+            sb.append("|");
+        }
+        
+        return sb.toString();
     }
 }

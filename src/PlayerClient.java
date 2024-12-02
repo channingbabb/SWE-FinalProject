@@ -92,23 +92,7 @@ public class PlayerClient extends AbstractClient {
                         System.out.println("Player in game: " + player.getUsername() + " Balance: " + player.getBalance());
                     }
                     
-                    SwingUtilities.invokeLater(() -> {
-                        System.out.println("Creating game panel and control");
-                        GamePanel gamePanel = new GamePanel(gamePlayers);
-                        setGamePanel(gamePanel);
-                        GameControl gameControl = new GameControl(this, gameName);
-                        setGameControl(gameControl);
-                        
-                        if (container != null) {
-                            System.out.println("Adding game panel to container");
-                            container.add(gamePanel, "GamePanel");
-                            CardLayout cardLayout = (CardLayout) container.getLayout();
-                            cardLayout.show(container, "GamePanel");
-                            System.out.println("Switched to game panel");
-                        } else {
-                            System.err.println("Error: Container is null when trying to start game");
-                        }
-                    });
+                    handleGameStarted(gameName, gamePlayers);
                 } else {
                     System.err.println("Invalid GAME_STARTED message format");
                 }
@@ -199,5 +183,31 @@ public class PlayerClient extends AbstractClient {
 
     public GamePanel getGamePanel() {
         return gamePanel;
+    }
+
+    public void handleGameStarted(String gameName, List<User> players) {
+        SwingUtilities.invokeLater(() -> {
+            try {
+                System.out.println("Creating game panel and control");
+                GamePanel gamePanel = new GamePanel(players);
+                setGamePanel(gamePanel);
+                GameControl gameControl = new GameControl(this, gameName);
+                setGameControl(gameControl);
+                
+                if (container != null) {
+                    System.out.println("Adding game panel to container");
+                    container.add(gamePanel, "GamePanel");
+                    CardLayout cardLayout = (CardLayout) container.getLayout();
+                    cardLayout.show(container, "GamePanel");
+                    System.out.println("Switched to game panel");
+                    
+                    // Request initial game state
+                    sendToServer("REQUEST_GAME_STATE:" + gameName);
+                }
+            } catch (Exception e) {
+                System.err.println("Error initializing game UI:");
+                e.printStackTrace();
+            }
+        });
     }
 }

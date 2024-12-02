@@ -8,10 +8,9 @@ public class Game {
     private int currentPlayerIndex;
     private GamePhase phase; // which phase of the game we're in
     private boolean gameInProgress;
-    private String name;
     private DeckClass deck;
-    private GamePanel gamePanel;
-
+    private String name;
+    
     public Game() {
         players = new ArrayList<>();
         communityCards = new ArrayList<>();
@@ -77,39 +76,40 @@ public class Game {
     		System.out.println("Player " + player.getUsername() + " cards: " + player.getHand().toString());
     	}
     	
-    	gamePanel.refresh();
-    	
     	changePhases();
     	System.out.println("Game phase changed to: " + phase);
     }
     
     public void handleCall(User player) {
-    	//calculate the call amount 
-    	int amount = currentBet - player.getCurrentBet();
-    	
-    	//checking if the player has enough money to call
-    	if (player.getBalance() < amount) {
-    		throw new IllegalArgumentException ("Not enough balance.");
+    	if (player.getUsername().equals(getCurrentPlayerUsername())) {
+    		int callAmount = currentBet - player.getCurrentBet();
+    		if (callAmount > player.getBalance()) {
+    			throw new IllegalStateException("Insufficient funds");
+    		}
+    		player.updateBalance(-callAmount);
+    		player.setCurrentBet(currentBet);
+    		pot += callAmount;
+    		nextPlayer();
+    	} else {
+    		throw new IllegalStateException("Not this player's turn");
     	}
-    	
-    	player.updateBalance(amount);
-    	player.setCurrentBet(currentBet);
-    	pot += amount; //update the pot
-    	
     }
     
     public void handleFold(User player) {
-    	//player is inactive and move to the next player
-    	player.fold();
-    	nextPlayer();
+    	if (player.getUsername().equals(getCurrentPlayerUsername())) {
+    		player.setActive(false);
+    		nextPlayer();
+    	} else {
+    		throw new IllegalStateException("Not this player's turn");
+    	}
     }
     
     public void handleCheck(User player) {
-    	if (player.getCurrentBet() < currentBet) {
-    		throw new IllegalStateException("Not enough money to check.");
+    	if (player.getUsername().equals(getCurrentPlayerUsername())) {
+    		nextPlayer();
+    	} else {
+    		throw new IllegalStateException("Not this player's turn");
     	}
-    	
-    	nextPlayer();
     }
     
     public void changePhases() {
@@ -148,6 +148,37 @@ public class Game {
         }
         players.add(player);
         player.setActive(true);
+    }
+
+    public void handleRaise(User player, int raiseAmount) {
+        if (player.getUsername().equals(getCurrentPlayerUsername())) {
+            if (raiseAmount > player.getBalance()) {
+                throw new IllegalStateException("Insufficient funds");
+            }
+			player.updateBalance(-raiseAmount);
+			player.setCurrentBet(currentBet + raiseAmount);
+			pot += raiseAmount;
+			nextPlayer();
+        } else {
+            throw new IllegalStateException("Not this player's turn");
+        }
+    }
+
+    public User findPlayer(String username) {
+        for (User player : players) {
+            if (player.getUsername().equals(username)) {
+                return player;
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<User> getPlayers() {
+        return new ArrayList<>(players);
+    }
+
+    public String getCurrentPlayerUsername() {
+        return players.get(currentPlayerIndex).getUsername();
     }
 
 }

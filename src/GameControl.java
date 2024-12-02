@@ -20,11 +20,18 @@ public class GameControl {
     
     private void setupMessageHandlers() {
         client.addMessageHandler("GAME_STATE", message -> {
+            System.out.println("Received GAME_STATE message");
             SwingUtilities.invokeLater(() -> {
-                Message msg = (Message) message;
-                int pot = msg.getPot();
-                List<User> players = msg.getPlayers();
-                updateGameState(pot, players);
+                try {
+                    Message msg = (Message) message;
+                    int pot = msg.getPot();
+                    List<User> players = msg.getPlayers();
+                    updateGameState(pot, players);
+                    System.out.println("Game state updated successfully");
+                } catch (Exception e) {
+                    System.err.println("Error handling GAME_STATE: " + e.getMessage());
+                    e.printStackTrace();
+                }
             });
         });
         
@@ -43,6 +50,16 @@ public class GameControl {
                 boolean success = msg.isSuccess();
                 String errorMessage = msg.getErrorMessage();
                 handleActionResult(success, errorMessage);
+            });
+        });
+        
+        client.addMessageHandler("GAME_ERROR", message -> {
+            SwingUtilities.invokeLater(() -> {
+                Message msg = (Message) message;
+                JOptionPane.showMessageDialog(gamePanel,
+                    msg.getErrorMessage(),
+                    "Game Error",
+                    JOptionPane.ERROR_MESSAGE);
             });
         });
     }
