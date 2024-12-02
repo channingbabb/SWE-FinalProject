@@ -223,8 +223,7 @@ public class ServerClass extends AbstractServer {
                     System.out.println("User not authorized to start game or game not found");
                 }
             } else if (message.startsWith("GAME_ACTION:")) {
-                String action = message.split(":")[1];
-                handleGameAction(action, client);
+                handleGameAction(message.substring("GAME_ACTION:".length()), client);
             }
         }
     }
@@ -463,16 +462,23 @@ public class ServerClass extends AbstractServer {
         try {
             System.out.println("Received game action: " + action + " from client: " + client.getId());
             String username = (String) client.getInfo("username");
+            System.out.println("Username: " + username);
             Game game = findGameForPlayer(username);
+            System.out.println("Found game: " + game);
             
-            if (game == null) {
-                client.sendToClient("GAME_ERROR:Game not found");
-                return;
+            System.out.println("Full action string before split: " + action);
+            String[] actionParts = action.split(":");
+            System.out.println("Action parts length: " + actionParts.length);
+            for(int i = 0; i < actionParts.length; i++) {
+                System.out.println("actionParts[" + i + "]: " + actionParts[i]);
             }
             
-            String[] actionParts = action.split(":");
             String actionType = actionParts[0];
+            System.out.println("Action type: " + actionType);
+            
             User player = game.findPlayer(username);
+            System.out.println("Found player: " + player);
+            System.out.println("Action type: " + actionType);
             
             if (player == null) {
                 client.sendToClient("GAME_ERROR:Player not found in game");
@@ -493,12 +499,17 @@ public class ServerClass extends AbstractServer {
                     break;
                     
                 case "RAISE":
+                    System.out.println("Received RAISE action from player: " + username);
+                                        System.out.println("Received raise action from player: " + username + ", raise amount: " + actionParts[1]);
+
                     if (actionParts.length < 2) {
+                        System.out.println("No raise amount specified");
                         client.sendToClient("GAME_ERROR:No raise amount specified");
                         return;
                     }
                     try {
                         int raiseAmount = Integer.parseInt(actionParts[1]);
+                        System.out.println("Raise amount: " + raiseAmount);
                         System.out.println("Processing raise of " + raiseAmount + " from player " + username);
                         game.handleRaise(player, raiseAmount);
                         System.out.println("Raise processed successfully");

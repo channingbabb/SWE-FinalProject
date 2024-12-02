@@ -169,14 +169,24 @@ public class Game {
     }
 
     public void handleRaise(User player, int raiseAmount) {
+        System.out.println("DEBUG: Starting handleRaise - Player: " + player.getUsername() + 
+                          ", Amount: " + raiseAmount);
+        System.out.println("DEBUG: Current player turn: " + getCurrentPlayerUsername());
+        System.out.println("DEBUG: Current pot: " + pot + ", Current bet: " + currentBet);
+        
         if (!player.getUsername().equals(getCurrentPlayerUsername())) {
+            System.out.println("DEBUG: Not player's turn! Current turn: " + getCurrentPlayerUsername());
             throw new IllegalStateException("Not this player's turn");
         }
         
         int callAmount = currentBet - player.getCurrentBet();
         int totalAmount = callAmount + raiseAmount;
         
+        System.out.println("DEBUG: Call amount: " + callAmount + ", Total amount: " + totalAmount);
+        System.out.println("DEBUG: Player balance: " + player.getBalance());
+        
         if (totalAmount > player.getBalance()) {
+            System.out.println("DEBUG: Insufficient funds! Required: " + totalAmount);
             throw new IllegalStateException("Insufficient funds");
         }
         
@@ -184,10 +194,12 @@ public class Game {
         currentBet = player.getCurrentBet();
         pot += totalAmount;
         
-        System.out.println("Player " + player.getUsername() + " raised by " + raiseAmount + 
-                          ". Total bet: " + currentBet + ", Pot: " + pot);
+        System.out.println("DEBUG: After raise - New pot: " + pot + ", New current bet: " + currentBet);
+        System.out.println("DEBUG: Player " + player.getUsername() + " new balance: " + player.getBalance());
         
         nextPlayer();
+        System.out.println("DEBUG: Next player: " + getCurrentPlayerUsername());
+        
         checkPhaseCompletion();
     }
 

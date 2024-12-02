@@ -86,9 +86,10 @@ public class GameControl {
                                     if (raiseAmount <= currentUser.getBalance()) {
                                         System.out.println("Sending raise action: " + raiseAmount);
                                         client.sendToServer("GAME_ACTION:RAISE:" + raiseAmount);
+                                        System.out.println("Raise action sent to server");
                                     } else {
                                         JOptionPane.showMessageDialog(gamePanel, 
-                                            "Insufficient funds!", 
+                                            "Insufficient funds! Your balance: $" + currentUser.getBalance(), 
                                             "Error", 
                                             JOptionPane.ERROR_MESSAGE);
                                     }
