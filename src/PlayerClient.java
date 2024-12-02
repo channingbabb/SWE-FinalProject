@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.function.Consumer;
 import java.io.IOException;
+import java.util.Arrays;
 
 public class PlayerClient extends AbstractClient {
     private LoginControl loginControl;
@@ -85,14 +86,7 @@ public class PlayerClient extends AbstractClient {
                     String gameName = parts[1];
                     String playersData = parts[2];
                     System.out.println("Game: " + gameName + ", Players data: " + playersData);
-                    List<User> gamePlayers = parsePlayersData(playersData);
-                    
-                    System.out.println("Parsed " + gamePlayers.size() + " players for game");
-                    for (User player : gamePlayers) {
-                        System.out.println("Player in game: " + player.getUsername() + " Cards: " + player.getHand().toString());
-                    }
-                    
-                    handleGameStarted(gameName, gamePlayers);
+                    handleGameStarted(gameName, playersData);
                 }
             } else if (message.startsWith("GAME_STATE:")) {
                 handleGameState(message);
@@ -198,23 +192,49 @@ public class PlayerClient extends AbstractClient {
         return gamePanel;
     }
 
-    public void handleGameStarted(String gameName, List<User> players) {
+    public void handleGameStarted(String gameName, String playersData) {
         SwingUtilities.invokeLater(() -> {
             try {
                 System.out.println("Creating game panel and control");
-                GamePanel gamePanel = new GamePanel(players);
+                
+                List<User> players = new ArrayList<>();
+                String[] playerInfos = playersData.split(",");
+                
+                for (String playerInfo : playerInfos) {
+                    if (!playerInfo.isEmpty()) {
+                        String[] parts = playerInfo.split("\\|");
+                        if (parts.length >= 2) {
+                            String username = parts[0];
+                            int balance = Integer.parseInt(parts[1]);
+                            int currentBet = Integer.parseInt(parts[2]);
+                            boolean isActive = Boolean.parseBoolean(parts[3]);
+                            int numCards = Integer.parseInt(parts[4]);
+                            
+                            User player = new User(username, balance);
+                            player.setCurrentBet(currentBet);
+                            player.setActive(isActive);
+                            
+                            for (int i = 0; i < numCards; i++) {
+                                String suit = parts[5 + (i * 2)];
+                                int rank = Integer.parseInt(parts[6 + (i * 2)]);
+                                player.getHand().addCard(new CardClass(suit, rank));
+                            }
+                            
+                            players.add(player);
+                            System.out.println("Added player: " + username + " with " + numCards + " cards");
+                        }
+                    }
+                }
+                
+                GamePanel gamePanel = new GamePanel(players, this);
                 setGamePanel(gamePanel);
                 GameControl gameControl = new GameControl(this, gameName);
                 setGameControl(gameControl);
                 
                 if (container != null) {
-                    System.out.println("Adding game panel to container");
                     container.add(gamePanel, "GamePanel");
                     CardLayout cardLayout = (CardLayout) container.getLayout();
                     cardLayout.show(container, "GamePanel");
-                    System.out.println("Switched to game panel");
-                    
-                    // Request initial game state
                     sendToServer("REQUEST_GAME_STATE:" + gameName);
                 }
             } catch (Exception e) {
@@ -254,6 +274,7 @@ public class PlayerClient extends AbstractClient {
         if (gamePanel != null) {
             gamePanel.updatePlayers(players);
             gamePanel.updatePot(pot);
+            gamePanel.updateTurnIndicator(currentPlayer);
         }
     }
 }

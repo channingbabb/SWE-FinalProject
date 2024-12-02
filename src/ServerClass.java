@@ -136,7 +136,9 @@ public class ServerClass extends AbstractServer {
                 String gameName = message.split(":")[1];
                 ArrayList<User> players = gameWaitingRooms.getOrDefault(gameName, new ArrayList<>());
                 try {
-                    client.sendToClient("WAITING_ROOM_PLAYERS:" + gameName + ":" + convertPlayersToString(players));
+                    String username = (String) client.getInfo("username");
+                    client.sendToClient("WAITING_ROOM_PLAYERS:" + gameName + ":" + 
+                        convertPlayersToString(players, username));
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -207,23 +209,11 @@ public class ServerClass extends AbstractServer {
                             System.out.println("Added player to game: " + player.getUsername());
                         }
                         game.startGame();
-                        System.out.println("Game started successfully");
-                        
-                        String playersData = convertPlayersToString(players);
-                        System.out.println("Broadcasting to players: " + playersData);
+                        activeGames.add(game);
+                        broadcastGameState(game);
                         
                         for (User player : players) {
-                            for (ConnectedClient connectedClient : connectedClients) {
-                                if (connectedClient.getUsername().equals(player.getUsername())) {
-                                    try {
-                                        System.out.println("Sending GAME_STARTED to: " + player.getUsername());
-                                        connectedClient.getClient().sendToClient("GAME_STARTED:" + gameName + ":" + playersData);
-                                    } catch (IOException e) {
-                                        System.err.println("Error sending game start to " + player.getUsername());
-                                        e.printStackTrace();
-                                    }
-                                }
-                            }
+                            sendGameStartedToPlayer(player.getUsername(), gameName, players);
                         }
                     } else {
                         System.out.println("Not enough players to start game");
@@ -237,7 +227,26 @@ public class ServerClass extends AbstractServer {
             }
         }
     }
-    
+
+    private void sendGameStartedToPlayer(String username, String gameName, ArrayList<User> players) {
+        System.out.println("Sending game started notification to player: " + username);
+        
+        for (ConnectedClient connectedClient : connectedClients) {
+            if (connectedClient.getUsername().equals(username)) {
+                try {
+                    String playerData = convertPlayersToString(players, username);
+                    String gameStartedMessage = String.format("GAME_STARTED:%s:%s", gameName, playerData);
+                    connectedClient.getClient().sendToClient(gameStartedMessage);
+                    updateClientActivity(connectedClient.getClient(), "Playing in " + gameName);
+                } catch (IOException e) {
+                    System.err.println("Error sending game started message to " + username);
+                    e.printStackTrace();
+                }
+                break;
+            }
+        }
+    }
+
     private void handleLeaderboardRequest(ConnectionToClient client) {
         try {
             LeaderboardData leaderboardData = new LeaderboardData();
@@ -317,9 +326,15 @@ public class ServerClass extends AbstractServer {
     }
 
     private void sendGameList(ConnectionToClient client) {
-        String gameList = "GAME_LIST:" + String.join(",", activeGameNames);
         try {
-            client.sendToClient(gameList);
+            StringBuilder gameListData = new StringBuilder();
+            for (String gameName : activeGameNames) {
+                ArrayList<User> players = gameWaitingRooms.getOrDefault(gameName, new ArrayList<>());
+                gameListData.append(gameName).append(":")
+                           .append(convertPlayersToString(players, (String)client.getInfo("username")))
+                           .append(";");
+            }
+            client.sendToClient("GAME_LIST:" + gameListData.toString());
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -367,14 +382,13 @@ public class ServerClass extends AbstractServer {
 
     private void broadcastWaitingRoomUpdate(String gameName) {
         ArrayList<User> players = gameWaitingRooms.get(gameName);
-        String playersData = convertPlayersToString(players);
         System.out.println("Broadcasting waiting room update for game: " + gameName);
-        System.out.println("Players data: " + playersData);
         
         for (User player : players) {
             try {
                 for (ConnectedClient connectedClient : connectedClients) {
                     if (connectedClient.getUsername().equals(player.getUsername())) {
+                        String playersData = convertPlayersToString(players, player.getUsername());
                         connectedClient.getClient().sendToClient(
                             "WAITING_ROOM_PLAYERS:" + gameName + ":" + playersData);
                     }
@@ -385,22 +399,26 @@ public class ServerClass extends AbstractServer {
         }
     }
 
-    private String convertPlayersToString(List<User> players) {
+    private String convertPlayersToString(List<User> players, String targetUsername) {
         StringBuilder sb = new StringBuilder();
         for (User player : players) {
             sb.append(player.getUsername()).append("|")
               .append(player.getBalance()).append("|")
               .append(player.getCurrentBet()).append("|")
-              .append(player.isActive()).append("|")
-              .append(player.getHand().getCards().size());
-            
-            for (CardClass card : player.getHand().getCards()) {
-                sb.append("|").append(card.getSuit())
-                  .append("|").append(card.getRank());
+              .append(player.isActive());
+              
+            if (player.getUsername().equals(targetUsername)) {
+                List<CardClass> cards = player.getHand().getCards();
+                sb.append("|").append(cards.size());
+                for (CardClass card : cards) {
+                    sb.append("|").append(card.getSuit())
+                      .append("|").append(card.getRank());
+                }
+            } else {
+                sb.append("|0");
             }
             sb.append(",");
         }
-        System.out.println("Converted player data: " + sb.toString());
         return sb.toString();
     }
 
@@ -502,34 +520,26 @@ public class ServerClass extends AbstractServer {
     }
 
     private void broadcastGameState(Game game) {
-        String gameState = createGameStateMessage(game);
-        for (User player : game.getPlayers()) {
-            try {
-                for (ConnectedClient connectedClient : connectedClients) {
-                    if (connectedClient.getUsername().equals(player.getUsername())) {
-                        connectedClient.getClient().sendToClient(gameState);
-                    }
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private Game findGameForPlayer(String username) {
-        for (Game game : activeGames) {
-            for (User player : game.getPlayers()) {
-                if (player.getUsername().equals(username)) {
-                    return game;
+        Thread[] clientThreads = getClientConnections();
+        for (Thread thread : clientThreads) {
+            if (thread instanceof ConnectionToClient) {
+                ConnectionToClient client = (ConnectionToClient) thread;
+                try {
+                    String playerSpecificState = createGameStateMessage(game, (String)client.getInfo("username"));
+                    client.sendToClient("GAME_STATE:" + playerSpecificState);
+                } catch (IOException e) {
+                    System.err.println("Error sending game state to client: " + e.getMessage());
                 }
             }
         }
-        return null;
     }
 
     private String createGameStateMessage(Game game) {
+        return createGameStateMessage(game, null);
+    }
+
+    private String createGameStateMessage(Game game, String targetPlayer) {
         StringBuilder sb = new StringBuilder();
-        sb.append("GAME_STATE:");
         sb.append(game.getName()).append(":");
         sb.append(game.getPot()).append(":");
         sb.append(game.getCurrentBet()).append(":");
@@ -550,15 +560,30 @@ public class ServerClass extends AbstractServer {
               .append(player.getCurrentBet()).append(",")
               .append(player.isActive());
             
-            ArrayList<CardClass> playerCards = player.getHand().getCards();
-            sb.append(",").append(playerCards.size());
-            for (CardClass card : playerCards) {
-                sb.append(",").append(card.getSuit())
-                  .append(",").append(card.getRank());
+            if (player.getUsername().equals(targetPlayer)) {
+                ArrayList<CardClass> playerCards = player.getHand().getCards();
+                sb.append(",").append(playerCards.size());
+                for (CardClass card : playerCards) {
+                    sb.append(",").append(card.getSuit())
+                      .append(",").append(card.getRank());
+                }
+            } else {
+                sb.append(",0"); 
             }
             sb.append("|");
         }
         
         return sb.toString();
+    }
+
+    private Game findGameForPlayer(String username) {
+        for (Game game : activeGames) {
+            for (User player : game.getPlayers()) {
+                if (player.getUsername().equals(username)) {
+                    return game;
+                }
+            }
+        }
+        return null;
     }
 }

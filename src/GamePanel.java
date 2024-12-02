@@ -3,6 +3,7 @@ import java.awt.event.ActionListener;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -36,24 +37,22 @@ public class GamePanel extends JPanel {
     private JLabel balanceLabel;
     private JLabel potLabel;
     private int currentPot;
+    private PlayerClient client;
+    private JLabel turnLabel;
 
-    public GamePanel(List<User> players) {
+    public GamePanel(List<User> players, PlayerClient client) {
         this.players = players;
-        System.out.println("Creating GamePanel with " + (players != null ? players.size() : 0) + " players");
-        if (players != null) {
-            for (User player : players) {
-                System.out.println("Player in GamePanel: " + player.getUsername() + " Balance: " + player.getBalance());
-            }
-        }
+        this.client = client;
         
         setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
         setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
         setSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
         setBackground(Color.DARK_GRAY);
+        setLayout(new BorderLayout());
         
         createTableImage();
-        setupLabels();
         setupButtons();
+        setupLabels();
         
         revalidate();
         repaint();
@@ -75,33 +74,53 @@ public class GamePanel extends JPanel {
         }
     }
 
-    private void setupLabels() {
-        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        balanceLabel = new JLabel("Balance: $0");
-        potLabel = new JLabel("Pot: $0");
-        balanceLabel.setForeground(Color.WHITE);
-        potLabel.setForeground(Color.WHITE);
-        infoPanel.setOpaque(false);
-        infoPanel.add(balanceLabel);
-        infoPanel.add(Box.createHorizontalStrut(20));
-        infoPanel.add(potLabel);
-        add(infoPanel, BorderLayout.NORTH);
-    }
-
     private void setupButtons() {
         callButton = new JButton("Call");
         foldButton = new JButton("Fold");
         raiseButton = new JButton("Raise");
         checkButton = new JButton("Check");
+        
+        setButtonsEnabled(false);
+    }
 
-        JPanel buttonPanel = new JPanel();
+    private void setupLabels() {
+        JPanel topInfoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        potLabel = new JLabel("Pot: $0");
+        potLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        potLabel.setForeground(Color.WHITE);
+        topInfoPanel.setOpaque(false);
+        topInfoPanel.add(potLabel);
+        add(topInfoPanel, BorderLayout.NORTH);
+        
+        JPanel southPanel = new JPanel(new BorderLayout());
+        southPanel.setOpaque(false);
+        
+        JPanel infoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        infoPanel.setOpaque(false);
+        
+        balanceLabel = new JLabel("Balance: $0");
+        turnLabel = new JLabel("Waiting for turn...", SwingConstants.CENTER);
+        
+        balanceLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        turnLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        balanceLabel.setForeground(Color.WHITE);
+        turnLabel.setForeground(Color.WHITE);
+        
+        infoPanel.add(balanceLabel);
+        infoPanel.add(Box.createHorizontalStrut(30));
+        infoPanel.add(turnLabel);
+        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        buttonPanel.setOpaque(false);
         buttonPanel.add(callButton);
         buttonPanel.add(foldButton);
         buttonPanel.add(raiseButton);
         buttonPanel.add(checkButton);
-
-        setLayout(new BorderLayout());
-        add(buttonPanel, BorderLayout.SOUTH);
+        
+        southPanel.add(infoPanel, BorderLayout.NORTH);
+        southPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+        add(southPanel, BorderLayout.SOUTH);
     }
 
     public void addActionListeners(ActionListener listener) {
@@ -129,50 +148,35 @@ public class GamePanel extends JPanel {
     }
 
     private void drawPlayers(Graphics2D g2d) {
-        if (players == null) return;
+        if (players == null || players.isEmpty()) {
+            System.out.println("No players to draw");
+            return;
+        }
         
+        System.out.println("Drawing " + players.size() + " players");
         double scaleX = (double) getWidth() / REFERENCE_WIDTH;
         double scaleY = (double) getHeight() / REFERENCE_HEIGHT;
         
         for (int i = 0; i < Math.min(players.size(), SEAT_POSITIONS.length); i++) {
-            User user = players.get(i);
+            User player = players.get(i);
             Point seatPos = SEAT_POSITIONS[i];
             
             int x = (int) (seatPos.x * scaleX);
             int y = (int) (seatPos.y * scaleY);
             
-            drawUser(g2d, user, x, y);
+            System.out.println("Drawing player " + player.getUsername() + " at position " + i);
+            drawUser(g2d, player, x, y);
         }
     }
 
     private void drawUser(Graphics2D g2d, User user, int x, int y) {
-        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        g2d.setFont(new Font("Arial", Font.BOLD, 14));
-        FontMetrics metrics = g2d.getFontMetrics();
-        String name = user.getUsername();
-        String balance = "$" + user.getBalance();
-        int nameWidth = metrics.stringWidth(name);
-        int balanceWidth = metrics.stringWidth(balance);
-        int textWidth = Math.max(nameWidth, balanceWidth) + 10;
-        int textHeight = 40;
-        
-        g2d.setColor(new Color(0, 0, 0, 180)); 
-        g2d.fillRect(x - textWidth/2, y - 90, textWidth, textHeight);
+        FontMetrics metrics;
         
         g2d.setColor(Color.WHITE);
-        g2d.drawString(name, x - nameWidth/2, y - 70);
+        g2d.fillOval(x - 25, y - 25, 50, 50);
+        g2d.setColor(Color.BLACK);
+        g2d.drawOval(x - 25, y - 25, 50, 50);
         
-        g2d.setFont(new Font("Arial", Font.PLAIN, 12));
-        metrics = g2d.getFontMetrics();
-        balanceWidth = metrics.stringWidth(balance);
-        g2d.drawString(balance, x - balanceWidth/2, y - 55);
-        
-        g2d.setColor(Color.GRAY);
-        g2d.fillOval(x - 32, y - 32, 64, 64);
-        g2d.setColor(Color.WHITE);
-        g2d.fillOval(x - 30, y - 30, 60, 60);
-
         g2d.setColor(Color.BLACK);
         g2d.setFont(new Font("Arial", Font.BOLD, 24));
         metrics = g2d.getFontMetrics();
@@ -180,41 +184,66 @@ public class GamePanel extends JPanel {
         int initialWidth = metrics.stringWidth(initial);
         g2d.drawString(initial, x - initialWidth/2, y + metrics.getHeight()/3);
         
-        drawUserCards(g2d, x, y, user.getHand().getCards());
+        drawUserCards(g2d, x, y, user.getHand().getCards(), user.getUsername());
     }
 
-    private void drawUserCards(Graphics2D g2d, int x, int y, List<CardClass> cards) {
-        int cardWidth = 30;
-        int cardHeight = 40;
-
-        System.out.println("Length of cards: " + cards.size());
-
-        for (int i = 0; i < cards.size(); i++){
-            CardClass card = cards.get(i);
-            System.out.println("Drawing card: " + card.getImage());
-            BufferedImage cardImage = null;
-
-            try{
-                cardImage = ImageIO.read(new File(card.getImage()));
-            } catch (IOException e){
-                System.out.println("Error loading image " + card.getImage());
+    private void drawUserCards(Graphics2D g2d, int x, int y, List<CardClass> cards, String username) {
+        int cardWidth = 60;
+        int cardHeight = 80;
+        
+        if (cardBackImage == null) {
+            try {
+                cardBackImage = ImageIO.read(new File("assets/card-back.png"));
+            } catch (IOException e) {
+                System.err.println("Error loading card back image: " + e.getMessage());
             }
-
-            if (cardImage == null){
-                if(cardBackImage != null){
-                    cardImage = cardBackImage;
-                } else {
-                    g2d.setColor(new Color(220, 220, 220));
-                    g2d.fillRect(x + (i * (cardWidth + 10)) - 40, y - 15, cardWidth, cardHeight);
-                    g2d.setColor(Color.GRAY);
-                    g2d.drawRect(x + (i * (cardWidth + 10)) - 40, y - 15, cardWidth, cardHeight);
-                    continue;
+        }
+        
+        if (username.equals(client.getCurrentUser().getUsername())) {
+            System.out.println("Drawing cards for current player: " + username);
+            for (int i = 0; i < cards.size(); i++) {
+                CardClass card = cards.get(i);
+                String rankText = convertRankToText(card.getRank());
+                String imagePath = "assets/cards/" + rankText + "_of_" + card.getSuit().toLowerCase() + ".png";
+                
+                System.out.println("Attempting to load card image: " + imagePath);
+                try {
+                    BufferedImage cardImage = ImageIO.read(new File(imagePath));
+                    int cardX = x + (i * (cardWidth + 10)) - 40;
+                    int cardY = y - cardHeight - 20;
+                    g2d.drawImage(cardImage, cardX, cardY, cardWidth, cardHeight, null);
+                    System.out.println("Successfully drew card: " + imagePath);
+                } catch (IOException e) {
+                    System.err.println("Error loading card image: " + imagePath);
+                    g2d.setColor(Color.WHITE);
+                    g2d.fillRect(x + (i * (cardWidth + 10)) - 40, y - cardHeight - 20, cardWidth, cardHeight);
+                    g2d.setColor(Color.BLACK);
+                    g2d.drawString(rankText + " of " + card.getSuit(), x + (i * (cardWidth + 10)) - 30, y - cardHeight + 20);
                 }
             }
-            int cardX = x + (i *(cardWidth + 10)) -40;
-            int cardY = y - cardHeight /2;
-            g2d.drawImage(cardImage, cardX, cardY, cardWidth, cardHeight, null);
+        } else {
+            for (int i = 0; i < 2; i++) {
+                int cardX = x + (i * (cardWidth + 10)) - 40;
+                int cardY = y - cardHeight - 20;
+                if (cardBackImage != null) {
+                    g2d.drawImage(cardBackImage, cardX, cardY, cardWidth, cardHeight, null);
+                } else {
+                    g2d.setColor(new Color(220, 220, 220));
+                    g2d.fillRect(cardX, cardY, cardWidth, cardHeight);
+                    g2d.setColor(Color.GRAY);
+                    g2d.drawRect(cardX, cardY, cardWidth, cardHeight);
+                }
+            }
+        }
+    }
 
+    private String convertRankToText(int rank) {
+        switch (rank) {
+            case 11: return "jack";
+            case 12: return "queen";
+            case 13: return "king";
+            case 14: case 1: return "ace";
+            default: return String.valueOf(rank);
         }
     }
 
@@ -236,8 +265,10 @@ public class GamePanel extends JPanel {
 
     public void updatePot(int pot) {
         this.currentPot = pot;
-        potLabel.setText("Pot: $" + pot);
-        repaint();
+        SwingUtilities.invokeLater(() -> {
+            potLabel.setText("Current Pot: $" + pot);
+            potLabel.repaint();
+        });
     }
 
     public void updatePlayerBalance(int balance) {
@@ -246,8 +277,12 @@ public class GamePanel extends JPanel {
     }
 
     public void updatePlayers(List<User> players) {
-        this.players = players;
-        repaint();
+        System.out.println("Updating players in GamePanel: " + players.size() + " players");
+        this.players = new ArrayList<>(players); 
+        for (User player : players) {
+            System.out.println("Player: " + player.getUsername() + ", Active: " + player.isActive());
+        }
+        SwingUtilities.invokeLater(this::repaint);
     }
 
     public void setButtonsEnabled(boolean enabled) {
@@ -259,5 +294,20 @@ public class GamePanel extends JPanel {
 
     public void refresh() {
         repaint();
+    }
+
+    public void updateTurnIndicator(String currentPlayer) {
+        SwingUtilities.invokeLater(() -> {
+            if (currentPlayer.equals(client.getCurrentUser().getUsername())) {
+                turnLabel.setText("★ YOUR TURN TO ACT ★");
+                turnLabel.setForeground(new Color(50, 205, 50));
+                setButtonsEnabled(true);
+            } else {
+                turnLabel.setText("Waiting for " + currentPlayer + " to act...");
+                turnLabel.setForeground(Color.WHITE);
+                setButtonsEnabled(false);
+            }
+            turnLabel.repaint();
+        });
     }
 }

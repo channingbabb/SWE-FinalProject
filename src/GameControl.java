@@ -20,14 +20,15 @@ public class GameControl {
     
     private void setupMessageHandlers() {
         client.addMessageHandler("GAME_STATE", message -> {
-            System.out.println("Received GAME_STATE message");
             SwingUtilities.invokeLater(() -> {
                 try {
                     Message msg = (Message) message;
                     int pot = msg.getPot();
                     List<User> players = msg.getPlayers();
+                    String currentPlayer = msg.getTurnPlayer();
                     updateGameState(pot, players);
-                    System.out.println("Game state updated successfully");
+                    gamePanel.updateTurnIndicator(currentPlayer);
+                    handlePlayerTurn(currentPlayer.equals(currentUser.getUsername()));
                 } catch (Exception e) {
                     System.err.println("Error handling GAME_STATE: " + e.getMessage());
                     e.printStackTrace();

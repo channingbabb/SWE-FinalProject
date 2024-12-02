@@ -57,7 +57,7 @@ public class WaitingRoomControl {
     private void startGame() {
         mainFrame.getContentPane().removeAll();
         
-        GamePanel gamePanel = new GamePanel(players);
+        GamePanel gamePanel = new GamePanel(players, client);
         mainFrame.add(gamePanel);
         
         mainFrame.revalidate();

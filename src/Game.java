@@ -49,7 +49,7 @@ public class Game {
     
     private void nextPlayer() {
     	do {
-    		currentPlayerIndex = currentPlayerIndex++ % players.size();
+    		currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     	} while(!players.get(currentPlayerIndex).isActive());
     }
     
@@ -63,6 +63,7 @@ public class Game {
     	gameInProgress = true;
     	phase = GamePhase.PRE_FLOP;
     	deck.shuffle();
+    	currentPlayerIndex = 0;
     	
     	for (User player : players) {
     		player.clearHand();
@@ -76,23 +77,25 @@ public class Game {
     		System.out.println("Player " + player.getUsername() + " cards: " + player.getHand().toString());
     	}
     	
+    	System.out.println("First player to act: " + getCurrentPlayerUsername());
     	changePhases();
-    	System.out.println("Game phase changed to: " + phase);
     }
     
     public void handleCall(User player) {
-    	if (player.getUsername().equals(getCurrentPlayerUsername())) {
-    		int callAmount = currentBet - player.getCurrentBet();
-    		if (callAmount > player.getBalance()) {
-    			throw new IllegalStateException("Insufficient funds");
-    		}
-    		player.updateBalance(-callAmount);
-    		player.setCurrentBet(currentBet);
-    		pot += callAmount;
-    		nextPlayer();
-    	} else {
-    		throw new IllegalStateException("Not this player's turn");
-    	}
+        if (!player.getUsername().equals(getCurrentPlayerUsername())) {
+            throw new IllegalStateException("Not this player's turn");
+        }
+        
+        int callAmount = currentBet - player.getCurrentBet();
+        if (callAmount > player.getBalance()) {
+            throw new IllegalStateException("Insufficient funds");
+        }
+        
+        player.placeBet(callAmount);
+        pot += callAmount;
+        
+        nextPlayer();
+        checkPhaseCompletion();
     }
     
     public void handleFold(User player) {
@@ -105,11 +108,16 @@ public class Game {
     }
     
     public void handleCheck(User player) {
-    	if (player.getUsername().equals(getCurrentPlayerUsername())) {
-    		nextPlayer();
-    	} else {
-    		throw new IllegalStateException("Not this player's turn");
-    	}
+        if (!player.getUsername().equals(getCurrentPlayerUsername())) {
+            throw new IllegalStateException("Not this player's turn");
+        }
+        
+        if (currentBet > player.getCurrentBet()) {
+            throw new IllegalStateException("Cannot check when there's a bet to call");
+        }
+        
+        nextPlayer();
+        checkPhaseCompletion();
     }
     
     public void changePhases() {
@@ -178,7 +186,115 @@ public class Game {
     }
 
     public String getCurrentPlayerUsername() {
+        if (players == null || players.isEmpty()) {
+            return "";
+        }
         return players.get(currentPlayerIndex).getUsername();
+    }
+
+    private void checkPhaseCompletion() {
+        boolean allPlayersActed = true;
+        int activePlayers = 0;
+        
+        for (User player : players) {
+            if (player.isActive()) {
+                activePlayers++;
+                if (player.getCurrentBet() != currentBet) {
+                    allPlayersActed = false;
+                    break;
+                }
+            }
+        }
+        
+        if (allPlayersActed || activePlayers == 1) {
+            if (activePlayers == 1) {
+                handleWinner();
+            } else {
+                advancePhase();
+            }
+        }
+    }
+
+    private void advancePhase() {
+        switch(phase) {
+            case PRE_FLOP:
+                phase = GamePhase.FLOP;
+                dealer.dealFlop(communityCards);
+                break;
+            case FLOP:
+                phase = GamePhase.TURN;
+                dealer.dealTurn(communityCards);
+                break;
+            case TURN:
+                phase = GamePhase.RIVER;
+                dealer.dealRiver(communityCards);
+                break;
+            case RIVER:
+                phase = GamePhase.SHOWDOWN;
+                handleShowdown();
+                break;
+            default:
+                break;
+        }
+        resetBets();
+        currentPlayerIndex = 0;
+    }
+
+    private void handleWinner() {
+        User winner = null;
+        for (User player : players) {
+            if (player.isActive()) {
+                winner = player;
+                break;
+            }
+        }
+        
+        if (winner != null) {
+            winner.updateBalance(pot);
+            pot = 0;
+        }
+        
+        endGame();
+    }
+
+    private void handleShowdown() {
+        User winner = null;
+        int bestHandRank = -1;
+        
+        ArrayList<CardClass> tableCards = getCommunityCards();
+        
+        for (User player : players) {
+            if (player.isActive()) {
+                ArrayList<CardClass> playerCards = player.getHand().getCards();
+                ArrayList<CardClass> allCards = new ArrayList<>(tableCards);
+                allCards.addAll(playerCards);
+                
+                int handRank = evaluateHand(allCards);
+                
+                if (handRank > bestHandRank) {
+                    bestHandRank = handRank;
+                    winner = player;
+                }
+            }
+        }
+        
+        if (winner != null) {
+            winner.updateBalance(pot);
+            System.out.println("Player " + winner.getUsername() + " wins pot of " + pot);
+            pot = 0;
+        }
+        
+        endGame();
+    }
+
+    private int evaluateHand(ArrayList<CardClass> cards) {
+        int highestRank = 0;
+        for (CardClass card : cards) {
+            if (card.getRank() > highestRank) {
+                highestRank = card.getRank();
+            }
+        }
+        return highestRank;
     }
 
 }
