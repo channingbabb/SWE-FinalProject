@@ -44,6 +44,8 @@ public class GamePanel extends JPanel {
         this.players = players;
         this.client = client;
         
+        this.currentPot = players.size() * 50;
+        
         setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
         setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
         setSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
@@ -53,6 +55,8 @@ public class GamePanel extends JPanel {
         createTableImage();
         setupButtons();
         setupLabels();
+        
+        potLabel.setText("Current Pot: $" + currentPot);
         
         revalidate();
         repaint();
