@@ -385,21 +385,22 @@ public class ServerClass extends AbstractServer {
         }
     }
 
-    private String convertPlayersToString(ArrayList<User> players) {
-        if (players == null || players.isEmpty()) {
-            return "";
-        }
-        
+    private String convertPlayersToString(List<User> players) {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < players.size(); i++) {
-            User player = players.get(i);
-            sb.append(player.getUsername())
-              .append("|")
-              .append(player.getBalance());
-            if (i < players.size() - 1) {
-                sb.append(",");
+        for (User player : players) {
+            sb.append(player.getUsername()).append("|")
+              .append(player.getBalance()).append("|")
+              .append(player.getCurrentBet()).append("|")
+              .append(player.isActive()).append("|")
+              .append(player.getHand().getCards().size());
+            
+            for (CardClass card : player.getHand().getCards()) {
+                sb.append("|").append(card.getSuit())
+                  .append("|").append(card.getRank());
             }
+            sb.append(",");
         }
+        System.out.println("Converted player data: " + sb.toString());
         return sb.toString();
     }
 
@@ -542,7 +543,8 @@ public class ServerClass extends AbstractServer {
         }
         sb.append(":");
         
-        for (User player : game.getPlayers()) {
+        ArrayList<User> players = game.getPlayers();
+        for (User player : players) {
             sb.append(player.getUsername()).append(",")
               .append(player.getBalance()).append(",")
               .append(player.getCurrentBet()).append(",")

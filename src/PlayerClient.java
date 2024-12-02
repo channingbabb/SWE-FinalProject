@@ -79,7 +79,7 @@ public class PlayerClient extends AbstractClient {
                     lobbyControl.handleGameJoined(success, resultMessage, null, false);
                 }
             } else if (message.startsWith("GAME_STARTED:")) {
-                System.out.println("Received GAME_STARTED message");
+                System.out.println("Received GAME_STARTED message: " + message);
                 String[] parts = message.split(":");
                 if (parts.length >= 3) {
                     String gameName = parts[1];
@@ -89,13 +89,13 @@ public class PlayerClient extends AbstractClient {
                     
                     System.out.println("Parsed " + gamePlayers.size() + " players for game");
                     for (User player : gamePlayers) {
-                        System.out.println("Player in game: " + player.getUsername() + " Balance: " + player.getBalance());
+                        System.out.println("Player in game: " + player.getUsername() + " Cards: " + player.getHand().toString());
                     }
                     
                     handleGameStarted(gameName, gamePlayers);
-                } else {
-                    System.err.println("Invalid GAME_STARTED message format");
                 }
+            } else if (message.startsWith("GAME_STATE:")) {
+                handleGameState(message);
             }
         } else if (msg instanceof LoginData) {
             loginControl.handleLoginResult((LoginData)msg);
@@ -140,10 +140,23 @@ public class PlayerClient extends AbstractClient {
             String[] playerStrings = playersData.split(",");
             for (String playerString : playerStrings) {
                 String[] playerInfo = playerString.split("\\|");
-                if (playerInfo.length >= 2) {
+                if (playerInfo.length >= 5) {
                     String username = playerInfo[0];
                     int balance = Integer.parseInt(playerInfo[1]);
-                    players.add(new User(username, balance));
+                    int currentBet = Integer.parseInt(playerInfo[2]);
+                    boolean isActive = Boolean.parseBoolean(playerInfo[3]);
+                    int numCards = Integer.parseInt(playerInfo[4]);
+                    
+                    User player = new User(username, balance);
+                    player.setCurrentBet(currentBet);
+                    player.setActive(isActive);
+                    
+                    for (int i = 0; i < numCards; i++) {
+                        String suit = playerInfo[5 + (i * 2)];
+                        int rank = Integer.parseInt(playerInfo[6 + (i * 2)]);
+                        player.getHand().addCard(new CardClass(suit, rank));
+                    }
+                    players.add(player);
                 }
             }
         }
@@ -209,5 +222,38 @@ public class PlayerClient extends AbstractClient {
                 e.printStackTrace();
             }
         });
+    }
+
+    private void handleGameState(String message) {
+        String[] parts = message.split(":");
+        String gameName = parts[1];
+        int pot = Integer.parseInt(parts[2]);
+        int currentBet = Integer.parseInt(parts[3]);
+        String currentPlayer = parts[4];
+        
+        String[] playerData = parts[7].split("\\|");
+        ArrayList<User> players = new ArrayList<>();
+        
+        for (String playerInfo : playerData) {
+            if (!playerInfo.isEmpty()) {
+                String[] playerParts = playerInfo.split(",");
+                User player = new User(playerParts[0], Integer.parseInt(playerParts[1]));
+                player.setCurrentBet(Integer.parseInt(playerParts[2]));
+                player.setActive(Boolean.parseBoolean(playerParts[3]));
+                
+                int numCards = Integer.parseInt(playerParts[4]);
+                for (int i = 0; i < numCards; i++) {
+                    String suit = playerParts[5 + (i * 2)];
+                    int rank = Integer.parseInt(playerParts[6 + (i * 2)]);
+                    player.getHand().addCard(new CardClass(suit, rank));
+                }
+                players.add(player);
+            }
+        }
+        
+        if (gamePanel != null) {
+            gamePanel.updatePlayers(players);
+            gamePanel.updatePot(pot);
+        }
     }
 }
