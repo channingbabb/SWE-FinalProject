@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 public enum HandRank {
     HIGH_CARD,
     ONE_PAIR,

@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import ocsf.server.AbstractServer;
 import ocsf.server.ConnectionToClient;
 import java.util.ArrayList;

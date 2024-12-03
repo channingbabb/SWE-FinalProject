@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import java.util.*;
 
 public class EvaluateHand {

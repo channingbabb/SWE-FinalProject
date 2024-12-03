@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import ocsf.server.ConnectionToClient;
 
 public class ConnectedClient {

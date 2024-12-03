@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import java.util.ArrayList;
 public class Game {
     private ArrayList<User> players; // all players in the game

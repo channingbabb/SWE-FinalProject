@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 public class CardClass implements java.io.Serializable {
     private String suit;
     private int rank;

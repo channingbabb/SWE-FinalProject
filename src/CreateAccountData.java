@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import java.io.Serializable;
 
 //CreateAccountData class is used as data container for transfering info about creating account between client and server      

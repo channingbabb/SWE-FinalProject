@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import java.util.ArrayList;
 
 public class Hand implements java.io.Serializable {

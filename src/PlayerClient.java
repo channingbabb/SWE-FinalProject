@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import ocsf.client.AbstractClient;
 import javax.swing.*;
 import java.awt.*;

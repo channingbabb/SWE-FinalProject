@@ -1,3 +1,5 @@
+package SWEFinalProject;
+
 import javax.swing.*;
 import java.awt.*;
 
