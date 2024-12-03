@@ -71,11 +71,24 @@ public class GameControl {
             try {
                 switch(command) {
                     case "Call":
-                        System.out.println("Sending CALL action to server");
-                        client.sendToServer("GAME_ACTION:CALL");
+                        int callAmount = currentPot - currentUser.getCurrentBet();
+                        if (currentUser.getBalance() >= callAmount) {
+                            Message callMessage = new Message("CALL", callAmount);
+                            callMessage.setAction("CALL");
+                            client.sendMessage(callMessage);
+                            System.out.println("CALL action sent to server with amount: " + callAmount);
+                        } else {
+                            JOptionPane.showMessageDialog(gamePanel,
+                                "Insufficient funds to call! Your balance: $" + currentUser.getBalance(),
+                                "Error",
+                                JOptionPane.ERROR_MESSAGE);
+                        }
                         break;
                     case "Fold":
-                        client.sendToServer("GAME_ACTION:FOLD");
+                        //client.sendToServer("GAME_ACTION:FOLD");
+                    	Message foldMessage = new Message("FOLD", 0);
+                    	foldMessage.setAction("FOLD");
+                    	client.sendMessage(foldMessage);
                         break;
                     case "Raise":
                         String amount = JOptionPane.showInputDialog("Enter raise amount:");
@@ -85,7 +98,10 @@ public class GameControl {
                                 if (raiseAmount > 0) {
                                     if (raiseAmount <= currentUser.getBalance()) {
                                         System.out.println("Sending raise action: " + raiseAmount);
-                                        client.sendToServer("GAME_ACTION:RAISE:" + raiseAmount);
+                                        //client.sendToServer("GAME_ACTION:RAISE:" + raiseAmount);
+                                        Message raiseMessage = new Message("RAISE", raiseAmount);
+                                        raiseMessage.setAction("RAISE");
+                                    	client.sendMessage(raiseMessage);
                                         System.out.println("Raise action sent to server");
                                     } else {
                                         JOptionPane.showMessageDialog(gamePanel, 
@@ -108,7 +124,11 @@ public class GameControl {
                         }
                         break;
                     case "Check":
-                        client.sendToServer("GAME_ACTION:CHECK");
+                    	System.out.println("Sending CHECK action to server");
+                        //client.sendToServer("GAME_ACTION:CHECK");
+                    	Message checkMessage = new Message("CHECK", 0);
+                    	checkMessage.setAction("CHECK");
+                    	client.sendMessage(checkMessage);
                         break;
                 }
             } catch (Exception ex) {

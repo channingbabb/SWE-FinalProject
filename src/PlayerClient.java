@@ -176,10 +176,12 @@ public class PlayerClient extends AbstractClient {
 
     public void sendMessage(Message message) {
         try {
+        	System.out.println("PlayerClient is sending game action now: " + message.getAction());
             String actionMessage = "GAME_ACTION:" + message.getAction();
-            if (message.getAmount() > 0) {
+            /*if (message.getAmount() > 0) {
                 actionMessage += ":" + message.getAmount();
-            }
+            }*/
+            
             sendToServer(actionMessage);
         } catch (IOException e) {
             System.err.println("Error sending game action: " + e.getMessage());

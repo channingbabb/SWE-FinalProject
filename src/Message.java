@@ -13,7 +13,8 @@ public class Message implements Serializable {
     private String errorMessage;
     private int amount;
 
-    public Message(String type) {
+    public Message(String type, int amount) {
+    	this.amount = amount;
         this.type = type;
     }
 
@@ -83,5 +84,9 @@ public class Message implements Serializable {
 
     public void setAmount(int amount) {
         this.amount = amount;
+    }
+    @Override
+    public String toString() {
+        return "Message{action='" + action + "', amount=" + amount + "}";
     }
 } 

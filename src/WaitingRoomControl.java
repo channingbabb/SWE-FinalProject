@@ -37,18 +37,18 @@ public class WaitingRoomControl {
     }
 
     public void handleStartGame() {
-        client.sendMessage(new Message("START_GAME"));
+        client.sendMessage(new Message("START_GAME", 0));
     }
 
     public void handleLeaveGame() {
-        client.sendMessage(new Message("LEAVE_GAME"));
+        client.sendMessage(new Message("LEAVE_GAME", 0));
         returnToLobby();
     }
 
     public void handleKickPlayer() {
         String selectedPlayer = view.getSelectedPlayer();
         if (selectedPlayer != null) {
-            Message kickMessage = new Message("KICK_PLAYER");
+            Message kickMessage = new Message("KICK_PLAYER", 0);
             kickMessage.setKickedPlayer(selectedPlayer);
             client.sendMessage(kickMessage);
         }

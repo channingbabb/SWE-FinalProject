@@ -223,6 +223,7 @@ public class ServerClass extends AbstractServer {
                     System.out.println("User not authorized to start game or game not found");
                 }
             } else if (message.startsWith("GAME_ACTION:")) {
+            	System.out.println("GAME_ACTION message: " + message);
                 handleGameAction(message.substring("GAME_ACTION:".length()), client);
             }
         }
