@@ -26,7 +26,7 @@ public class GamePanel extends JPanel {
     private static final Point DEALER_POSITION = new Point(999, 120);
     private static final int REFERENCE_WIDTH = 1900;
     private static final int REFERENCE_HEIGHT = 900;
-    private static final Point COMMUNITY_CARDS_POSITION = new Point(850, 400);
+    private static final Point COMMUNITY_CARDS_POSITION = new Point(950, 450);
     private List<User> players;
     private BufferedImage tableImage;
     private BufferedImage cardBackImage;
@@ -324,15 +324,24 @@ public class GamePanel extends JPanel {
             this.communityCards = new ArrayList<>(cards);
             System.out.println("Updated community cards: " + cards.size() + " cards");
             for (CardClass card : cards) {
-                System.out.println("Card: " + card.toString());
+                System.out.println("Community card: " + card.getSuit() + " of rank " + card.getRank());
             }
+            SwingUtilities.invokeLater(() -> {
+                repaint();
+                System.out.println("Repainting game panel with " + cards.size() + " community cards");
+            });
         } else {
             this.communityCards.clear();
+            System.out.println("Cleared community cards");
+            SwingUtilities.invokeLater(this::repaint);
         }
-        SwingUtilities.invokeLater(this::repaint);
     }
 
     private void drawCommunityCards(Graphics2D g2d) {
+        if (communityCards == null || communityCards.isEmpty()) {
+            return;
+        }
+
         double scaleX = (double) getWidth() / REFERENCE_WIDTH;
         double scaleY = (double) getHeight() / REFERENCE_HEIGHT;
         
@@ -341,7 +350,10 @@ public class GamePanel extends JPanel {
         
         int cardWidth = 60;
         int cardHeight = 80;
-        int spacing = 10;
+        int spacing = 15;
+        
+        int totalWidth = (cardWidth + spacing) * communityCards.size() - spacing;
+        int startX = x - (totalWidth / 2);
         
         for (int i = 0; i < communityCards.size(); i++) {
             CardClass card = communityCards.get(i);
@@ -350,13 +362,15 @@ public class GamePanel extends JPanel {
             
             try {
                 BufferedImage cardImage = ImageIO.read(new File(imagePath));
-                int cardX = x + (i * (cardWidth + spacing)) - ((cardWidth + spacing) * 2);
+                int cardX = startX + (i * (cardWidth + spacing));
                 g2d.drawImage(cardImage, cardX, y, cardWidth, cardHeight, null);
+                System.out.println("Successfully drew community card: " + card.toString());
             } catch (IOException e) {
+                System.err.println("Failed to load card image: " + imagePath);
                 g2d.setColor(Color.WHITE);
-                g2d.fillRect(x + (i * (cardWidth + spacing)) - ((cardWidth + spacing) * 2), y, cardWidth, cardHeight);
+                g2d.fillRect(startX + (i * (cardWidth + spacing)), y, cardWidth, cardHeight);
                 g2d.setColor(Color.BLACK);
-                g2d.drawString(rankText + " of " + card.getSuit(), x + (i * (cardWidth + spacing)) - ((cardWidth + spacing) * 2), y + 40);
+                g2d.drawString(rankText + " of " + card.getSuit(), startX + (i * (cardWidth + spacing)), y + 40);
             }
         }
     }

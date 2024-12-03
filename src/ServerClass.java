@@ -628,9 +628,14 @@ public class ServerClass extends AbstractServer {
         
         ArrayList<CardClass> communityCards = game.getCommunityCards();
         sb.append(communityCards.size()).append(":");
-        for (CardClass card : communityCards) {
-            sb.append(card.getSuit()).append(",")
-              .append(card.getRank()).append("|");
+        if (!communityCards.isEmpty()) {
+            for (int i = 0; i < communityCards.size(); i++) {
+                CardClass card = communityCards.get(i);
+                sb.append(card.getSuit()).append(",").append(card.getRank());
+                if (i < communityCards.size() - 1) {
+                    sb.append("|");
+                }
+            }
         }
         sb.append(":");
         

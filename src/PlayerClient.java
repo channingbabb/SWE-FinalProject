@@ -267,6 +267,30 @@ public class PlayerClient extends AbstractClient {
         int currentBet = Integer.parseInt(parts[3]);
         String currentPlayer = parts[4];
         
+        // parse the community cards
+        int numCommunityCards = Integer.parseInt(parts[5]);
+        ArrayList<CardClass> communityCards = new ArrayList<>();
+        if (numCommunityCards > 0) {
+            String[] communityCardData = parts[6].split("\\|");
+            for (String cardInfo : communityCardData) {
+                if (!cardInfo.isEmpty()) {
+                    String[] cardParts = cardInfo.split(",");
+                    if (cardParts.length >= 2) {
+                        String suit = cardParts[0];
+                        int rank = Integer.parseInt(cardParts[1]);
+                        communityCards.add(new CardClass(suit, rank));
+                        System.out.println("Added community card: " + suit + " of rank " + rank);
+                    }
+                }
+            }
+        }
+        
+        if (gamePanel != null) {
+            gamePanel.updateCommunityCards(communityCards);
+            System.out.println("Updated game panel with " + communityCards.size() + " community cards");
+        }
+        
+        // parse player data
         String[] playerData = parts[7].split("\\|");
         ArrayList<User> players = new ArrayList<>();
         
@@ -300,6 +324,7 @@ public class PlayerClient extends AbstractClient {
             gamePanel.updatePot(pot);
             gamePanel.updateTurnIndicator(currentPlayer);
             gamePanel.updatePlayerBalance(currentUser.getBalance());
+            gamePanel.updateCommunityCards(communityCards);
         }
     }
 }
