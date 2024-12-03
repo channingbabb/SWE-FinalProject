@@ -260,8 +260,10 @@ public class PlayerClient extends AbstractClient {
 
     //handles the game state sent from server
     private void handleGameState(String message) {
-        System.out.println("Received game state update: " + message);
+        System.out.println("\n--- Processing Game State ---");
         String[] parts = message.split(":");
+        System.out.println("Number of message parts: " + parts.length);
+        
         String gameName = parts[1];
         int pot = Integer.parseInt(parts[2]);
         int currentBet = Integer.parseInt(parts[3]);
@@ -269,17 +271,23 @@ public class PlayerClient extends AbstractClient {
         
         // parse the community cards
         int numCommunityCards = Integer.parseInt(parts[5]);
+        System.out.println("Expected community cards: " + numCommunityCards);
+        
         ArrayList<CardClass> communityCards = new ArrayList<>();
         if (numCommunityCards > 0) {
             String[] communityCardData = parts[6].split("\\|");
+            System.out.println("Community card data: " + parts[6]);
+            System.out.println("Number of community card entries: " + communityCardData.length);
+            
             for (String cardInfo : communityCardData) {
                 if (!cardInfo.isEmpty()) {
                     String[] cardParts = cardInfo.split(",");
+                    System.out.println("Processing card parts: " + String.join(", ", cardParts));
                     if (cardParts.length >= 2) {
                         String suit = cardParts[0];
                         int rank = Integer.parseInt(cardParts[1]);
                         communityCards.add(new CardClass(suit, rank));
-                        System.out.println("Added community card: " + suit + " of rank " + rank);
+                        System.out.println("Successfully added community card: " + suit + " of rank " + rank);
                     }
                 }
             }
@@ -326,5 +334,8 @@ public class PlayerClient extends AbstractClient {
             gamePanel.updatePlayerBalance(currentUser.getBalance());
             gamePanel.updateCommunityCards(communityCards);
         }
+
+        System.out.println("DEBUG: Received game state message");
+        System.out.println("DEBUG: Community cards part: " + parts[5] + " : " + parts[6]);
     }
 }

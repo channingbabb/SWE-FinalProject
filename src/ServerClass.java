@@ -659,6 +659,8 @@ public class ServerClass extends AbstractServer {
             sb.append("|");
         }
         System.out.println("Generated game state for " + targetPlayer + ": " + sb.toString());
+        System.out.println("DEBUG: Creating game state with community cards: " + communityCards.size());
+        System.out.println("DEBUG: Community cards string: " + sb.toString());
         return sb.toString();
     }
 

@@ -248,21 +248,43 @@ public class Game {
     }
 
     private void advancePhase() {
+        System.out.println("\n--- Advancing Game Phase ---");
+        System.out.println("Current phase: " + phase);
+        
         switch(phase) {
             case PRE_FLOP:
                 phase = GamePhase.FLOP;
+                System.out.println("Dealing flop...");
                 dealer.dealFlop(communityCards);
+                System.out.println("Community cards after flop: " + communityCards.size());
+                System.out.println("DEBUG: Community cards after dealing: " + communityCards.size());
+                for (CardClass card : communityCards) {
+                    System.out.println("DEBUG: Dealt card: " + card.toString());
+                }
                 break;
             case FLOP:
                 phase = GamePhase.TURN;
+                System.out.println("Dealing turn...");
                 dealer.dealTurn(communityCards);
+                System.out.println("Community cards after turn: " + communityCards.size());
+                System.out.println("DEBUG: Community cards after dealing: " + communityCards.size());
+                for (CardClass card : communityCards) {
+                    System.out.println("DEBUG: Dealt card: " + card.toString());
+                }
                 break;
             case TURN:
                 phase = GamePhase.RIVER;
+                System.out.println("Dealing river...");
                 dealer.dealRiver(communityCards);
+                System.out.println("Community cards after river: " + communityCards.size());
+                System.out.println("DEBUG: Community cards after dealing: " + communityCards.size());
+                for (CardClass card : communityCards) {
+                    System.out.println("DEBUG: Dealt card: " + card.toString());
+                }
                 break;
             case RIVER:
                 phase = GamePhase.SHOWDOWN;
+                System.out.println("Moving to showdown...");
                 handleShowdown();
                 break;
             default:
@@ -327,6 +349,19 @@ public class Game {
             }
         }
         return highestRank;
+    }
+
+    private void updatePlayerCommunityCards() {
+        System.out.println("Updating community cards for all players");
+        for (User player : players) {
+            if (player.isActive()) {
+                player.getHand().clearCommunityCards();
+                for (CardClass card : communityCards) {
+                    player.getHand().addCommunityCard(card);
+                    System.out.println("Added community card to " + player.getUsername() + ": " + card.toString());
+                }
+            }
+        }
     }
 
 }

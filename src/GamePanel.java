@@ -339,9 +339,11 @@ public class GamePanel extends JPanel {
 
     private void drawCommunityCards(Graphics2D g2d) {
         if (communityCards == null || communityCards.isEmpty()) {
+            System.out.println("DEBUG: No community cards to draw");
             return;
         }
 
+        System.out.println("DEBUG: Drawing " + communityCards.size() + " community cards");
         double scaleX = (double) getWidth() / REFERENCE_WIDTH;
         double scaleY = (double) getHeight() / REFERENCE_HEIGHT;
         
