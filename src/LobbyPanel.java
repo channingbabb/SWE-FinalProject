@@ -56,7 +56,8 @@ public class LobbyPanel extends JPanel {
     public void updateGamesList(String[] games) {
         gamesModel.clear();
         for (String game : games) {
-            gamesModel.addElement(game);
+            String gameName = game.contains("|") ? game.split("\\|")[0] : game;
+            gamesModel.addElement(gameName);
         }
     }
     
