@@ -1,6 +1,7 @@
-import javax.swing.*;
+ import javax.swing.*;
 import java.awt.*;
 
+//CreateAccountPanel is the GUI part for creating new account
 public class CreateAccountPanel extends JPanel {
     private JTextField usernameField;
     private JPasswordField passwordField;
@@ -18,24 +19,28 @@ public class CreateAccountPanel extends JPanel {
         submitButton = new JButton("Create Account");
         cancelButton = new JButton("Cancel");
         
+        //adding username label and field
         c.gridx = 0;
         c.gridy = 0;
         add(new JLabel("Username: "), c);
         c.gridx = 1;
         add(usernameField, c);
         
+        //adding password label and field
         c.gridx = 0;
         c.gridy = 1;
         add(new JLabel("Password: "), c);
         c.gridx = 1;
         add(passwordField, c);
         
+        //adding confirm password label and field
         c.gridx = 0;
         c.gridy = 2;
         add(new JLabel("Confirm Password: "), c);
         c.gridx = 1;
         add(confirmPasswordField, c);
         
+        //creating th submit and cancel button
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(submitButton);
         buttonPanel.add(cancelButton);

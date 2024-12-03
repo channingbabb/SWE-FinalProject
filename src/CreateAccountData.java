@@ -1,5 +1,6 @@
 import java.io.Serializable;
 
+//CreateAccountData class is used as data container for transfering info about creating account between client and server      
 public class CreateAccountData implements Serializable {
     private String username;
     private String password;
