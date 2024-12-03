@@ -48,6 +48,7 @@ public class GamePanel extends JPanel {
         this.client = client;
         
         this.currentPot = players.size() * 50;
+        //this.currentPot = 0;
         
         setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
         setMinimumSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
@@ -339,6 +340,10 @@ public class GamePanel extends JPanel {
             this.communityCards.clear();
             System.out.println("Cleared community cards");
             SwingUtilities.invokeLater(this::repaint);
+        }
+        
+        if(cards == null) {
+        	System.out.println("Community cards is null when trying to updateCommunityCards");
         }
     }
 
