@@ -26,6 +26,7 @@ public class GamePanel extends JPanel {
     private static final Point DEALER_POSITION = new Point(999, 120);
     private static final int REFERENCE_WIDTH = 1900;
     private static final int REFERENCE_HEIGHT = 900;
+    private static final Point COMMUNITY_CARDS_POSITION = new Point(850, 400);
     private List<User> players;
     private BufferedImage tableImage;
     private BufferedImage cardBackImage;
@@ -149,6 +150,8 @@ public class GamePanel extends JPanel {
         } else {
             System.out.println("No players to draw");
         }
+
+        drawCommunityCards(g2d);
     }
 
     private void drawPlayers(Graphics2D g2d) {
@@ -314,5 +317,38 @@ public class GamePanel extends JPanel {
             }
             turnLabel.repaint();
         });
+    }
+
+    private void drawCommunityCards(Graphics2D g2d) {
+        if (client == null || client.getCurrentUser() == null) {
+            return;
+        }
+
+        double scaleX = (double) getWidth() / REFERENCE_WIDTH;
+        double scaleY = (double) getHeight() / REFERENCE_HEIGHT;
+        
+        int x = (int) (COMMUNITY_CARDS_POSITION.x * scaleX);
+        int y = (int) (COMMUNITY_CARDS_POSITION.y * scaleY);
+        
+        int cardWidth = 60;
+        int cardHeight = 80;
+        int spacing = 10;
+        
+        for (int i = 0; i < client.getCurrentUser().getHand().getCommunityCards().size(); i++) {
+            CardClass card = client.getCurrentUser().getHand().getCommunityCards().get(i);
+            String rankText = convertRankToText(card.getRank());
+            String imagePath = "assets/cards/" + rankText + "_of_" + card.getSuit().toLowerCase() + ".png";
+            
+            try {
+                BufferedImage cardImage = ImageIO.read(new File(imagePath));
+                int cardX = x + (i * (cardWidth + spacing)) - ((cardWidth + spacing) * 2);
+                g2d.drawImage(cardImage, cardX, y, cardWidth, cardHeight, null);
+            } catch (IOException e) {
+                g2d.setColor(Color.WHITE);
+                g2d.fillRect(x + (i * (cardWidth + spacing)) - ((cardWidth + spacing) * 2), y, cardWidth, cardHeight);
+                g2d.setColor(Color.BLACK);
+                g2d.drawString(rankText + " of " + card.getSuit(), x + (i * (cardWidth + spacing)) - ((cardWidth + spacing) * 2), y + 40);
+            }
+        }
     }
 }

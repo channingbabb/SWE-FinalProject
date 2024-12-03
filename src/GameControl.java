@@ -107,10 +107,7 @@ public class GameControl {
                                 if (raiseAmount > 0) {
                                     if (raiseAmount <= currentUser.getBalance()) { //also have to make sure user has enough balance
                                         System.out.println("Sending raise action: " + raiseAmount);
-                                        //client.sendToServer("GAME_ACTION:RAISE:" + raiseAmount);
-                                        Message raiseMessage = new Message("RAISE", raiseAmount);
-                                        raiseMessage.setAction("RAISE");
-                                    	client.sendMessage(raiseMessage);
+                                        client.sendToServer("GAME_ACTION:RAISE:" + raiseAmount);
                                         System.out.println("Raise action sent to server");
                                     } else {
                                         JOptionPane.showMessageDialog(gamePanel, 
