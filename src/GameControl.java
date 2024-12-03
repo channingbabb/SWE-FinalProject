@@ -153,11 +153,15 @@ public class GameControl {
         gamePanel.updatePot(currentPot);
         gamePanel.updatePlayers(players);
         
-        //update the current user's state based on updated info
+        if (currentUser != null && currentUser.getHand() != null) {
+            List<CardClass> communityCards = currentUser.getHand().getCommunityCards();
+            gamePanel.updateCommunityCards(communityCards);
+        }
+        
         for (User player : players) {
             if (player.getUsername().equals(currentUser.getUsername())) {
                 currentUser = player;
-                gamePanel.updatePlayerBalance(player.getBalance()); //update balance display
+                gamePanel.updatePlayerBalance(player.getBalance());
                 break;
             }
         }

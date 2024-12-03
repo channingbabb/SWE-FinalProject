@@ -40,6 +40,7 @@ public class GamePanel extends JPanel {
     private int currentPot;
     private PlayerClient client;
     private JLabel turnLabel;
+    private List<CardClass> communityCards = new ArrayList<>();
 
     public GamePanel(List<User> players, PlayerClient client) {
         this.players = players;
@@ -147,11 +148,10 @@ public class GamePanel extends JPanel {
             System.out.println("Drawing " + players.size() + " players");
             drawPlayers(g2d);
             drawDealerButton(g2d);
+            drawCommunityCards(g2d);
         } else {
             System.out.println("No players to draw");
         }
-
-        drawCommunityCards(g2d);
     }
 
     private void drawPlayers(Graphics2D g2d) {
@@ -319,11 +319,20 @@ public class GamePanel extends JPanel {
         });
     }
 
-    private void drawCommunityCards(Graphics2D g2d) {
-        if (client == null || client.getCurrentUser() == null) {
-            return;
+    public void updateCommunityCards(List<CardClass> cards) {
+        if (cards != null) {
+            this.communityCards = new ArrayList<>(cards);
+            System.out.println("Updated community cards: " + cards.size() + " cards");
+            for (CardClass card : cards) {
+                System.out.println("Card: " + card.toString());
+            }
+        } else {
+            this.communityCards.clear();
         }
+        SwingUtilities.invokeLater(this::repaint);
+    }
 
+    private void drawCommunityCards(Graphics2D g2d) {
         double scaleX = (double) getWidth() / REFERENCE_WIDTH;
         double scaleY = (double) getHeight() / REFERENCE_HEIGHT;
         
@@ -334,8 +343,8 @@ public class GamePanel extends JPanel {
         int cardHeight = 80;
         int spacing = 10;
         
-        for (int i = 0; i < client.getCurrentUser().getHand().getCommunityCards().size(); i++) {
-            CardClass card = client.getCurrentUser().getHand().getCommunityCards().get(i);
+        for (int i = 0; i < communityCards.size(); i++) {
+            CardClass card = communityCards.get(i);
             String rankText = convertRankToText(card.getRank());
             String imagePath = "assets/cards/" + rankText + "_of_" + card.getSuit().toLowerCase() + ".png";
             

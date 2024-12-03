@@ -190,7 +190,8 @@ public class Game {
             throw new IllegalStateException("Insufficient funds");
         }
         
-        player.placeBet(totalAmount);
+        player.updateBalance(-totalAmount);
+        player.setCurrentBet(player.getCurrentBet() + totalAmount);
         currentBet = player.getCurrentBet();
         pot += totalAmount;
         
