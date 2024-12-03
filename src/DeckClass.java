@@ -22,12 +22,15 @@ public class DeckClass {
     public void shuffle() {
         Collections.shuffle(cards);
     }
-    
+
     public CardClass drawCard() {
         if (cards.isEmpty()) {
+            System.out.println("Deck is empty!");
             return null;
         }
-        return cards.remove(0);
+        CardClass card = cards.remove(0);
+        System.out.println("Deck: Drew card " + card.toString());
+        return card;
     }
 
     public void reset() {

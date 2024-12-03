@@ -2,11 +2,17 @@ import java.util.ArrayList;
 
 public class Dealer {
     private DeckClass deck;
-    
+    private ArrayList<CardClass> communityCards;
+
     public Dealer() {
         deck = new DeckClass();
         deck.shuffle();
+        communityCards = new ArrayList<>();
         System.out.println("Dealer: New deck created and shuffled");
+    }
+
+    public ArrayList<CardClass> getCommunityCards(){
+        return communityCards;
     }
 
     public void dealInitialCards(ArrayList<User> players) {
@@ -28,20 +34,21 @@ public class Dealer {
         System.out.println("\nDealer: Dealing the flop");
         CardClass burnCard = deck.drawCard();
         System.out.println("Dealer: Burned card: " + burnCard.toString());
-        
+
         for (int i = 0; i < 3; i++) {
             CardClass card = deck.drawCard();
             communityCards.add(card);
+            this.communityCards.add(card);
             System.out.println("Dealer: Dealt flop card " + (i + 1) + ": " + card.toString());
         }
         System.out.println("Dealer: Flop dealing complete\n");
     }
-    
+
     public void dealTurn(ArrayList<CardClass> communityCards) {
         System.out.println("\nDealer: Dealing the turn");
         CardClass burnCard = deck.drawCard();
         System.out.println("Dealer: Burned card: " + burnCard.toString());
-        
+
         CardClass card = deck.drawCard();
         communityCards.add(card);
         System.out.println("Dealer: Dealt turn card: " + card.toString() + "\n");
@@ -51,10 +58,11 @@ public class Dealer {
         System.out.println("\nDealer: Dealing the river");
         CardClass burnCard = deck.drawCard();
         System.out.println("Dealer: Burned card: " + burnCard.toString());
-        
+
         CardClass card = deck.drawCard();
-        communityCards.add(card);
-        System.out.println("Dealer: Dealt river card: " + card.toString() + "\n");
+        communityCards.add(card); // Add card to community cards
+        System.out.println("Dealer: Dealt river card: " + card.toString());
+        System.out.println("Current Community Cards: " + communityCards);
     }
 
     public void resetDeck() {
