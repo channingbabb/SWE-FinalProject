@@ -11,6 +11,7 @@ public class Game {
     private DeckClass deck;
     private String name;
     
+    // initializes a new game
     public Game() {
         players = new ArrayList<>();
         communityCards = new ArrayList<>();
@@ -52,7 +53,8 @@ public class Game {
     		currentPlayerIndex = (currentPlayerIndex + 1) % players.size();
     	} while(!players.get(currentPlayerIndex).isActive());
     }
-    
+
+    // start game if there are at least 2 players
     public void startGame() {
     	if(players.size() < 2) {
     		System.out.println("Cannot start game: Not enough players");
@@ -62,10 +64,11 @@ public class Game {
     	System.out.println("Starting game with " + players.size() + " players");
     	gameInProgress = true;
     	phase = GamePhase.PRE_FLOP;
-    	deck.shuffle();
+    	deck.shuffle(); // make sure we shuffle the deck
     	currentPlayerIndex = 0;
     	pot = 0;
-    	
+
+        // get buy in from each player
     	for (User player : players) {
     		player.clearHand();
     		System.out.println("Cleared hand for player: " + player.getUsername());
@@ -79,7 +82,8 @@ public class Game {
     			player.setActive(false);
     		}
     	}
-    	
+
+        // deal two cards to each player
     	dealer.dealInitialCards(players);
     	System.out.println("Initial cards dealt to all players");
     	
@@ -91,7 +95,8 @@ public class Game {
     	advancePhase();
     	System.out.println("After changePhases() have been called -> phase: " + phase);
     }
-    
+
+    // handles logic whenever a player calls
     public void handleCall(User player) {
         if (!player.getUsername().equals(getCurrentPlayerUsername())) {
             throw new IllegalStateException("Not this player's turn");
@@ -108,7 +113,8 @@ public class Game {
         nextPlayer();
         checkPhaseCompletion();
     }
-    
+
+    // logic for when player folds
     public void handleFold(User player) {
     	if (player.getUsername().equals(getCurrentPlayerUsername())) {
     		player.setActive(false);
@@ -117,7 +123,8 @@ public class Game {
     		throw new IllegalStateException("Not this player's turn");
     	}
     }
-    
+
+    // logic for when players chekcs
     public void handleCheck(User player) {
         if (!player.getUsername().equals(getCurrentPlayerUsername())) {
             throw new IllegalStateException("Not this player's turn");
@@ -173,6 +180,7 @@ public class Game {
         player.setActive(true);
     }
 
+    // logic for when a player raises
     public void handleRaise(User player, int raiseAmount) {
         System.out.println("DEBUG: Starting handleRaise - Player: " + player.getUsername() + 
                           ", Amount: " + raiseAmount);
@@ -253,22 +261,47 @@ public class Game {
     }
 
     private void advancePhase() {
+        System.out.println("\n--- Advancing Game Phase ---");
+        System.out.println("Current phase: " + phase);
+        
         switch(phase) {
             case PRE_FLOP:
                 phase = GamePhase.FLOP;
+                System.out.println("Dealing flop...");
                 dealer.dealFlop(communityCards);
+
                 System.out.println("advancePhase() dealer dealt FLOP");
+
+                System.out.println("Community cards after flop: " + communityCards.size());
+                System.out.println("DEBUG: Community cards after dealing: " + communityCards.size());
+                for (CardClass card : communityCards) {
+                    System.out.println("DEBUG: Dealt card: " + card.toString());
+                }
+
                 break;
             case FLOP:
                 phase = GamePhase.TURN;
+                System.out.println("Dealing turn...");
                 dealer.dealTurn(communityCards);
+                System.out.println("Community cards after turn: " + communityCards.size());
+                System.out.println("DEBUG: Community cards after dealing: " + communityCards.size());
+                for (CardClass card : communityCards) {
+                    System.out.println("DEBUG: Dealt card: " + card.toString());
+                }
                 break;
             case TURN:
                 phase = GamePhase.RIVER;
+                System.out.println("Dealing river...");
                 dealer.dealRiver(communityCards);
+                System.out.println("Community cards after river: " + communityCards.size());
+                System.out.println("DEBUG: Community cards after dealing: " + communityCards.size());
+                for (CardClass card : communityCards) {
+                    System.out.println("DEBUG: Dealt card: " + card.toString());
+                }
                 break;
             case RIVER:
                 phase = GamePhase.SHOWDOWN;
+                System.out.println("Moving to showdown...");
                 handleShowdown();
                 break;
             default:
@@ -278,6 +311,7 @@ public class Game {
         currentPlayerIndex = 0;
     }
 
+    // logic to handle winner
     private void handleWinner() {
         User winner = null;
         for (User player : players) {
@@ -325,6 +359,7 @@ public class Game {
         endGame();
     }
 
+    // compare player hands
     private int evaluateHand(ArrayList<CardClass> cards) {
         int highestRank = 0;
         for (CardClass card : cards) {
@@ -333,6 +368,19 @@ public class Game {
             }
         }
         return highestRank;
+    }
+
+    private void updatePlayerCommunityCards() {
+        System.out.println("Updating community cards for all players");
+        for (User player : players) {
+            if (player.isActive()) {
+                player.getHand().clearCommunityCards();
+                for (CardClass card : communityCards) {
+                    player.getHand().addCommunityCard(card);
+                    System.out.println("Added community card to " + player.getUsername() + ": " + card.toString());
+                }
+            }
+        }
     }
 
 }
