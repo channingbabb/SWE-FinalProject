@@ -183,6 +183,7 @@ public class PlayerClient extends AbstractClient {
             }*/
             
             sendToServer(actionMessage);
+            System.out.println("Send to server from client: " + actionMessage);
         } catch (IOException e) {
             System.err.println("Error sending game action: " + e.getMessage());
             e.printStackTrace();
