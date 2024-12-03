@@ -9,10 +9,14 @@ public class DeckClass {
         String[] suits = {"Hearts", "Diamonds", "Clubs", "Spades"};
         
         for (String suit : suits) {
-            for (int value = 2; value <= 14; value++) {
-                cards.add(new CardClass(suit, value));
+            for (int rank = 2; rank <= 14; rank++) {
+                cards.add(new CardClass(suit,rank));
             }
         }
+    }
+
+    public ArrayList<CardClass> getCards() {
+        return new ArrayList<>(cards);
     }
     
     public void shuffle() {
@@ -25,4 +29,17 @@ public class DeckClass {
         }
         return cards.remove(0);
     }
+
+    public void reset() {
+        cards.clear();
+        String[] suits = {"Hearts", "Diamonds", "Clubs", "Spades"};
+        for (String suit : suits) {
+            for (int rank = 2; rank <= 14; rank++) {
+                cards.add(new CardClass(suit, rank));
+            }
+        }
+        shuffle();
+    }
+
+
 }

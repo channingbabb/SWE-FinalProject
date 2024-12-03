@@ -14,16 +14,12 @@ public class LeaderboardControl implements ActionListener {
         this.client = client;
         this.container = container;
         
-        // Add action listener to back button
         leaderboardPanel.getBackButton().addActionListener(this);
-        
-        // Request leaderboard data from server
         requestLeaderboardUpdate();
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Handle back button click
         if (e.getSource() == leaderboardPanel.getBackButton()) {
             CardLayout cardLayout = (CardLayout) container.getLayout();
             cardLayout.show(container, "LobbyPanel");
@@ -32,7 +28,6 @@ public class LeaderboardControl implements ActionListener {
     
     private void requestLeaderboardUpdate() {
         try {
-            // Send request to server for updated leaderboard data
             client.sendToServer("REQUEST_LEADERBOARD");
         } catch (Exception e) {
             e.printStackTrace();
@@ -40,13 +35,10 @@ public class LeaderboardControl implements ActionListener {
     }
     
     public void updateLeaderboard(LeaderboardData data) {
-        // Convert LeaderboardData to List<User>
-        List<User> userList = data.toUserList(); // Assuming a method to convert exists
-        // Update the leaderboard panel with new data
+        List<User> userList = data.toUserList();
         leaderboardPanel.updateLeaderboard(userList);
     }
     
-    // Method to refresh leaderboard data
     public void refreshLeaderboard() {
         requestLeaderboardUpdate();
     }

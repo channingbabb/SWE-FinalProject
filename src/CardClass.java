@@ -1,30 +1,42 @@
-public class CardClass {
+public class CardClass implements java.io.Serializable {
     private String suit;
-    private int value;
-    
-    public CardClass(String suit, int value) {
+    private int rank;
+    private static final String IMAGE_PATH = "assets/cards/";
+
+    public CardClass(String suit, int rank) {
         this.suit = suit;
-        this.value = value;
+        this.rank = rank;
     }
-    
+
+    public CardClass() {
+    }
+
     public String getSuit() {
         return suit;
     }
-    
-    public int getValue() {
-        return value;
+
+    public int getRank() {
+        return rank;
     }
-    
+
+    public String getImage() {
+        String rankString = rankToString(rank).toLowerCase();
+        String suitString = suit.toLowerCase();
+        return IMAGE_PATH + rankString + "_of_" + suitString + ".png";
+    }
+
+    private String rankToString(int rank) {
+        switch (rank) {
+            case 11: return "jack";
+            case 12: return "queen";
+            case 13: return "king";
+            case 14: return "ace";
+            default: return String.valueOf(rank);
+        }
+    }
+
     @Override
     public String toString() {
-        String valueString;
-        switch (value) {
-            case 11: valueString = "Jack"; break;
-            case 12: valueString = "Queen"; break;
-            case 13: valueString = "King"; break;
-            case 14: valueString = "Ace"; break;
-            default: valueString = String.valueOf(value);
-        }
-        return valueString + " of " + suit;
+        return rankToString(rank) + " of " + suit;
     }
 }

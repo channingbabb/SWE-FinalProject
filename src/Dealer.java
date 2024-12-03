@@ -1,36 +1,65 @@
+import java.util.ArrayList;
+
 public class Dealer {
     private DeckClass deck;
-    private Game currentGame;
     
     public Dealer() {
         deck = new DeckClass();
-    }
-    
-    public void setGame(Game game) {
-        this.currentGame = game;
-    }
-    
-    public void dealInitialCards() {
         deck.shuffle();
-        // Deal two cards to each player
+        System.out.println("Dealer: New deck created and shuffled");
+    }
+
+    public void dealInitialCards(ArrayList<User> players) {
+        System.out.println("\nDealer: Starting to deal initial cards to " + players.size() + " players");
         for (int i = 0; i < 2; i++) {
-            for (Hand playerHand : currentGame.getPlayerHands()) {
-                playerHand.addCard(deck.drawCard());
+            System.out.println("Dealer: Dealing round " + (i + 1));
+            for (User player : players) {
+                if (player.isActive() && player.getBalance() > 0) {
+                    CardClass card = deck.drawCard();
+                    player.getHand().addCard(card);
+                    System.out.println("Dealer: Dealt " + card.toString() + " to player " + player.getUsername());
+                }
             }
         }
+        System.out.println("Dealer: Finished dealing initial cards\n");
     }
-    
-    public void dealFlop() {
-        // Burn one card and deal three community cards
-        deck.drawCard(); // burn
+
+    public void dealFlop(ArrayList<CardClass> communityCards) {
+        System.out.println("\nDealer: Dealing the flop");
+        CardClass burnCard = deck.drawCard();
+        System.out.println("Dealer: Burned card: " + burnCard.toString());
+        
         for (int i = 0; i < 3; i++) {
-            currentGame.addCommunityCard(deck.drawCard());
+            CardClass card = deck.drawCard();
+            communityCards.add(card);
+            System.out.println("Dealer: Dealt flop card " + (i + 1) + ": " + card.toString());
         }
+        System.out.println("Dealer: Flop dealing complete\n");
     }
     
-    public void dealTurnOrRiver() {
-        // Burn one card and deal one community card
-        deck.drawCard(); // burn
-        currentGame.addCommunityCard(deck.drawCard());
+    public void dealTurn(ArrayList<CardClass> communityCards) {
+        System.out.println("\nDealer: Dealing the turn");
+        CardClass burnCard = deck.drawCard();
+        System.out.println("Dealer: Burned card: " + burnCard.toString());
+        
+        CardClass card = deck.drawCard();
+        communityCards.add(card);
+        System.out.println("Dealer: Dealt turn card: " + card.toString() + "\n");
+    }
+
+    public void dealRiver(ArrayList<CardClass> communityCards) {
+        System.out.println("\nDealer: Dealing the river");
+        CardClass burnCard = deck.drawCard();
+        System.out.println("Dealer: Burned card: " + burnCard.toString());
+        
+        CardClass card = deck.drawCard();
+        communityCards.add(card);
+        System.out.println("Dealer: Dealt river card: " + card.toString() + "\n");
+    }
+
+    public void resetDeck() {
+        deck.reset();
+        deck.shuffle();
+        System.out.println("Dealer: Deck has been reset and shuffled");
     }
 }

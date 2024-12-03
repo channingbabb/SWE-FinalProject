@@ -1,14 +1,17 @@
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.CardLayout;
 
 public class CreateAccountControl implements ActionListener {
     private CreateAccountPanel createAccountPanel;
     private PlayerClient client;
+    private JPanel container;
     
-    public CreateAccountControl(CreateAccountPanel panel, PlayerClient client) {
+    public CreateAccountControl(CreateAccountPanel panel, PlayerClient client, JPanel container) {
         this.createAccountPanel = panel;
         this.client = client;
+        this.container = container;
         
         panel.getSubmitButton().addActionListener(this);
         panel.getCancelButton().addActionListener(this);
@@ -35,6 +38,9 @@ public class CreateAccountControl implements ActionListener {
             } catch (Exception ex) {
                 ex.printStackTrace();
             }
+        } else if (e.getSource() == createAccountPanel.getCancelButton()) {
+            CardLayout cardLayout = (CardLayout) container.getLayout();
+            cardLayout.show(container, "InitialPanel");
         }
     }
     

@@ -1,17 +1,17 @@
-import javax.swing.*;
 import java.awt.*;
+import javax.swing.*;
 
 public class LoginPanel extends JPanel {
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JButton submitButton;
     private JButton createAccountButton;
+    private LoginControl controller;
     
     public LoginPanel() {
         setLayout(new GridBagLayout());
         GridBagConstraints c = new GridBagConstraints();
         
-        // Username field
         usernameField = new JTextField(20);
         c.gridx = 1;
         c.gridy = 0;
@@ -19,7 +19,6 @@ public class LoginPanel extends JPanel {
         c.gridx = 2;
         add(usernameField, c);
         
-        // Password field
         passwordField = new JPasswordField(20);
         c.gridx = 1;
         c.gridy = 1;
@@ -27,9 +26,8 @@ public class LoginPanel extends JPanel {
         c.gridx = 2;
         add(passwordField, c);
         
-        // Buttons
         submitButton = new JButton("Login");
-        createAccountButton = new JButton("Create Account");
+        createAccountButton = new JButton("Cancel");
         
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(submitButton);
@@ -39,6 +37,10 @@ public class LoginPanel extends JPanel {
         c.gridy = 2;
         c.gridwidth = 2;
         add(buttonPanel, c);
+    }
+    
+    public void setController(LoginControl controller) {
+        this.controller = controller;
     }
     
     public String getUsername() {

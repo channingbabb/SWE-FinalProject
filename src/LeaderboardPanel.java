@@ -1,7 +1,7 @@
-import javax.swing.*;
 import java.awt.*;
-import javax.swing.table.DefaultTableModel;
 import java.util.List;
+import javax.swing.*;
+import javax.swing.table.DefaultTableModel;
 
 public class LeaderboardPanel extends JPanel {
     private JTable leaderboardTable;
@@ -11,9 +11,15 @@ public class LeaderboardPanel extends JPanel {
     public LeaderboardPanel() {
         setLayout(new BorderLayout());
         
-        String[] columnNames = {"Rank", "Username", "Score"};
-        tableModel = new DefaultTableModel(columnNames, 0);
+        String[] columnNames = {"Rank", "Username", "Balance"};
+        tableModel = new DefaultTableModel(columnNames, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
         leaderboardTable = new JTable(tableModel);
+        leaderboardTable.getTableHeader().setReorderingAllowed(false);
         
         backButton = new JButton("Back to Lobby");
         
@@ -28,7 +34,7 @@ public class LeaderboardPanel extends JPanel {
             tableModel.addRow(new Object[]{
                 rank++,
                 user.getUsername(),
-                user.getBalance()
+                "$" + user.getBalance()
             });
         }
     }

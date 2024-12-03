@@ -1,6 +1,6 @@
 import java.util.ArrayList;
 
-public class Hand {
+public class Hand implements java.io.Serializable {
     private ArrayList<CardClass> cards;
     
     public Hand() {
@@ -8,14 +8,31 @@ public class Hand {
     }
     
     public void addCard(CardClass card) {
-        cards.add(card);
+        System.out.println("Adding card to hand: " + card.toString());
+        if (cards.size() < 2){
+            cards.add(card);
+            System.out.println("Hand now contains " + cards.size() + " cards");
+        }
     }
     
     public ArrayList<CardClass> getCards() {
-        return cards;
+        return new ArrayList<>(cards);
     }
     
     public void clear() {
         cards.clear();
+    }
+
+    public void clearHand() {
+        cards.clear();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (CardClass card : cards) {
+            sb.append(card.toString()).append(" ");
+        }
+        return sb.toString().trim();
     }
 }
