@@ -4,14 +4,20 @@ public class LoginData implements Serializable {
     private String username;
     private String password;
     private boolean success;
+    private User user;
     
     public LoginData(String username, String password) {
         this.username = username;
         this.password = password;
     }
     
-    public LoginData(boolean success) {
+    public LoginData(boolean success, User user) {
         this.success = success;
+        this.user = user;
+    }
+    
+    public User getUser() {
+        return user;
     }
     
     public String getUsername() {

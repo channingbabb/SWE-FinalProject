@@ -8,8 +8,10 @@ public class Hand implements java.io.Serializable {
     }
     
     public void addCard(CardClass card) {
+        System.out.println("Adding card to hand: " + card.toString());
         if (cards.size() < 2){
             cards.add(card);
+            System.out.println("Hand now contains " + cards.size() + " cards");
         }
     }
     
@@ -23,5 +25,14 @@ public class Hand implements java.io.Serializable {
 
     public void clearHand() {
         cards.clear();
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (CardClass card : cards) {
+            sb.append(card.toString()).append(" ");
+        }
+        return sb.toString().trim();
     }
 }

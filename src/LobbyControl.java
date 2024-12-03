@@ -8,6 +8,7 @@ public class LobbyControl {
     private PlayerClient client;
     private JPanel container;
     private static final int DEFAULT_GAME_SIZE = 4;
+    private WaitingRoomPanel waitingRoomPanel;
 
     public LobbyControl(LobbyPanel view, PlayerClient client, JPanel container) {
         this.view = view;
@@ -16,6 +17,8 @@ public class LobbyControl {
         this.leaderboardPanel = new LeaderboardPanel();
         
         setupListeners();
+        
+        refreshGames();
     }
 
     private void setupListeners() {
@@ -27,6 +30,8 @@ public class LobbyControl {
     }
 
     private void createGame() {
+        System.out.println("Current user: " + client.getCurrentUser());
+        
         if (!client.isConnected()) {
             JOptionPane.showMessageDialog(view,
                     "Error: Not connected to server",
@@ -37,6 +42,7 @@ public class LobbyControl {
 
         User currentUser = client.getCurrentUser();
         if (currentUser == null) {
+            System.out.println("getCurrentUser() returned null");
             JOptionPane.showMessageDialog(view,
                     "Error: Not logged in",
                     "Error",
@@ -178,11 +184,26 @@ public class LobbyControl {
         });
     }
 
-    public void handleGameJoined(boolean success, String message) {
+    public void handleGameJoined(boolean success, String message, String gameName, boolean isCreator) {
         SwingUtilities.invokeLater(() -> {
             if (success) {
+                waitingRoomPanel = new WaitingRoomPanel(gameName, isCreator);
+                container.add(waitingRoomPanel, "WaitingRoomPanel");
+                
+                waitingRoomPanel.getLeaveButton().addActionListener(e -> leaveGame());
+                if (isCreator) {
+                    waitingRoomPanel.getKickButton().addActionListener(e -> kickPlayer());
+                    waitingRoomPanel.getStartGameButton().addActionListener(e -> startGame());
+                }
+                
                 CardLayout cardLayout = (CardLayout) container.getLayout();
-                cardLayout.show(container, "GamePanel");
+                cardLayout.show(container, "WaitingRoomPanel");
+                
+                try {
+                    client.sendToServer("REQUEST_PLAYERS:" + gameName);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             } else {
                 JOptionPane.showMessageDialog(view,
                     "Failed to join game: " + message,
@@ -190,5 +211,54 @@ public class LobbyControl {
                     JOptionPane.ERROR_MESSAGE);
             }
         });
+    }
+
+    private void leaveGame() {
+        try {
+            client.sendToServer("LEAVE_GAME");
+            CardLayout cardLayout = (CardLayout) container.getLayout();
+            cardLayout.show(container, "LobbyPanel");
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void kickPlayer() {
+        String selectedPlayer = waitingRoomPanel.getSelectedPlayer();
+        if (selectedPlayer != null) {
+            try {
+                client.sendToServer("KICK_PLAYER:" + selectedPlayer);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        } else {
+            JOptionPane.showMessageDialog(waitingRoomPanel,
+                "Please select a player to kick",
+                "No Player Selected",
+                JOptionPane.WARNING_MESSAGE);
+        }
+    }
+
+    private void startGame() {
+        System.out.println("Start game button clicked");
+        try {
+            client.sendToServer("START_GAME");
+            System.out.println("Sent START_GAME to server");
+        } catch (Exception ex) {
+            System.err.println("Error sending START_GAME to server");
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(waitingRoomPanel,
+                "Error starting game",
+                "Error",
+                JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public void updateWaitingRoomPlayers(List<User> players) {
+        if (waitingRoomPanel != null) {
+            SwingUtilities.invokeLater(() -> {
+                waitingRoomPanel.updatePlayersList(players);
+            });
+        }
     }
 }

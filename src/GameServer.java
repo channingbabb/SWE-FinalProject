@@ -4,7 +4,6 @@ import ocsf.server.ConnectionToClient;
 import javax.swing.*;
 
 public class GameServer extends AbstractServer {
-    // Add counters at the class level
     private int unauthenticatedUsers = 0;
     private int authenticatedUsers = 0;
     private JTextArea unauthenticatedCountArea;
@@ -25,7 +24,6 @@ public class GameServer extends AbstractServer {
 
     @Override
     protected void clientDisconnected(ConnectionToClient client) {
-        // Check if client was authenticated
         Boolean isAuthenticated = (Boolean) client.getInfo("authenticated");
         if (isAuthenticated != null && isAuthenticated) {
             authenticatedUsers--;
@@ -35,7 +33,6 @@ public class GameServer extends AbstractServer {
         updateCounterDisplays();
     }
 
-    // Add this method to handle successful login
     public void handleSuccessfulLogin(ConnectionToClient client) {
         unauthenticatedUsers--;
         authenticatedUsers++;

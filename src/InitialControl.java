@@ -13,34 +13,27 @@ public class InitialControl extends LeaderboardData implements ActionListener {
         this.client = client;
         this.container = container;
         
-        // Add action listeners to buttons
         this.initialPanel.getLoginButton().addActionListener(this);
         this.initialPanel.getCreateAccountButton().addActionListener(this);
     }
     
     @Override
     public void actionPerformed(ActionEvent e) {
-        // Get the CardLayout for switching panels
         CardLayout cardLayout = (CardLayout) container.getLayout();
         
-        // Handle button clicks
         if (e.getSource() == initialPanel.getLoginButton()) {
-            // Switch to login panel
             cardLayout.show(container, "LoginPanel");
         }
         else if (e.getSource() == initialPanel.getCreateAccountButton()) {
-            // Switch to create account panel
             cardLayout.show(container, "CreateAccountPanel");
         }
     }
     
-    // Method to return to initial panel
     public void returnToInitial() {
         CardLayout cardLayout = (CardLayout) container.getLayout();
         cardLayout.show(container, "InitialPanel");
     }
     
-    // Method to handle connection error
     public void handleConnectionError() {
         javax.swing.JOptionPane.showMessageDialog(
             initialPanel,
@@ -50,7 +43,6 @@ public class InitialControl extends LeaderboardData implements ActionListener {
         );
     }
     
-    // Method to initialize client connection
     public void initializeConnection() {
         try {
             client.openConnection();
