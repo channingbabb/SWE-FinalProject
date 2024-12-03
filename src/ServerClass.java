@@ -47,6 +47,7 @@ public class ServerClass extends AbstractServer {
     @Override
     protected void handleMessageFromClient(Object msg, ConnectionToClient client) {
     	//error message if the database connection was unsuccessful
+    	System.out.println("Server received message: " + msg);
         if (database == null) {
             logToServer("Error: Database not available");
             try {
@@ -614,10 +615,10 @@ public class ServerClass extends AbstractServer {
         }
     }
 
-    /*private String createGameStateMessage(Game game) {
+    private String createGameStateMessage(Game game) {
         return createGameStateMessage(game, null);
     }
-*/
+
     private String createGameStateMessage(Game game, String targetPlayer) {
         StringBuilder sb = new StringBuilder();
         sb.append(game.getName()).append(":");
