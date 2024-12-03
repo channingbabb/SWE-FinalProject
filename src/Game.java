@@ -88,7 +88,8 @@ public class Game {
     	}
     	
     	System.out.println("First player to act: " + getCurrentPlayerUsername());
-    	changePhases();
+    	advancePhase();
+    	System.out.println("After changePhases() have been called -> phase: " + phase);
     }
     
     public void handleCall(User player) {
@@ -134,15 +135,19 @@ public class Game {
     	switch(phase) {
     	case PRE_FLOP:
     		phase = GamePhase.FLOP;
+    		System.out.println("Game phase switched to " + phase);
     		break;
     	case FLOP:
     		phase = GamePhase.TURN;
+    		System.out.println("Game phase switched to " + phase);
     		break;
     	case TURN:
     		phase = GamePhase.RIVER;
+    		System.out.println("Game phase switched to " + phase);
     		break;
     	case RIVER:
     		phase = GamePhase.SHOWDOWN;
+    		System.out.println("Game phase switched to " + phase);
     		break;
     	default:
     		phase = GamePhase.PRE_FLOP;
@@ -252,6 +257,7 @@ public class Game {
             case PRE_FLOP:
                 phase = GamePhase.FLOP;
                 dealer.dealFlop(communityCards);
+                System.out.println("advancePhase() dealer dealt FLOP");
                 break;
             case FLOP:
                 phase = GamePhase.TURN;
