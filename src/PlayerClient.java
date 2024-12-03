@@ -257,38 +257,54 @@ public class PlayerClient extends AbstractClient {
         });
     }
 
+    //handles the game state sent from server
     private void handleGameState(String message) {
         System.out.println("Received game state update: " + message);
+        //need to split the state into the right format
         String[] parts = message.split(":");
-        String gameName = parts[1];
-        int pot = Integer.parseInt(parts[2]);
-        int currentBet = Integer.parseInt(parts[3]);
-        String currentPlayer = parts[4];
+        //extracting the game details 
+        String gameName = parts[1]; //game name
+        int pot = Integer.parseInt(parts[2]);//pot
+        int currentBet = Integer.parseInt(parts[3]); //current bet
+        String currentPlayer = parts[4]; //current player's turn
         
+        //extracting player's data after ::
         String[] playerData = parts[7].split("\\|");
         ArrayList<User> players = new ArrayList<>();
         
         for (String playerInfo : playerData) {
             if (!playerInfo.isEmpty()) {
+            	//splitting the player info
                 String[] playerParts = playerInfo.split(",");
+              
+                //this will be the user name and balance
                 User player = new User(playerParts[0], Integer.parseInt(playerParts[1]));
+                //current bet
                 player.setCurrentBet(Integer.parseInt(playerParts[2]));
+                //active status
                 player.setActive(Boolean.parseBoolean(playerParts[3]));
                 
+                //add cards to player
                 int numCards = Integer.parseInt(playerParts[4]);
+                
                 for (int i = 0; i < numCards; i++) {
-                    String suit = playerParts[5 + (i * 2)];
+                    String suit = playerParts[5 + (i *2)];
                     int rank = Integer.parseInt(playerParts[6 + (i * 2)]);
+                    //add card to player's hand
                     player.getHand().addCard(new CardClass(suit, rank));
                 }
+                //add player to the list
                 players.add(player);
+            } else {
+            	System.err.println("Error parsing player data: " + playerInfo);
             }
         }
-        
+        //updating the gamePanel with the new game state
         if (gamePanel != null) {
-            gamePanel.updatePlayers(players);
-            gamePanel.updatePot(pot);
-            gamePanel.updateTurnIndicator(currentPlayer);
-        }
+            gamePanel.updatePlayers(players); //update the player list
+            gamePanel.updatePot(pot); //update the pot
+            gamePanel.updateTurnIndicator(currentPlayer);//update the turn indicator
+        
     }
+}
 }
