@@ -42,6 +42,7 @@ public class GamePanel extends JPanel {
     private JLabel turnLabel;
     private List<CardClass> communityCards = new ArrayList<>();
 
+    // create the game panel with the sizing and layout
     public GamePanel(List<User> players, PlayerClient client) {
         this.players = players;
         this.client = client;
@@ -64,6 +65,7 @@ public class GamePanel extends JPanel {
         repaint();
     }
 
+    // put the background image
     private void createTableImage() {
         try {
             tableImage = ImageIO.read(new File("assets/poker-table.png"));
@@ -80,6 +82,7 @@ public class GamePanel extends JPanel {
         }
     }
 
+    // setup the buttons for the gui
     private void setupButtons() {
         callButton = new JButton("Call");
         foldButton = new JButton("Fold");
@@ -89,6 +92,7 @@ public class GamePanel extends JPanel {
         setButtonsEnabled(false);
     }
 
+    // setup labels for the gui
     private void setupLabels() {
         JPanel topInfoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         potLabel = new JLabel("Pot: $0");
@@ -129,6 +133,7 @@ public class GamePanel extends JPanel {
         add(southPanel, BorderLayout.SOUTH);
     }
 
+    // add all the action listeners
     public void addActionListeners(ActionListener listener) {
         this.actionListener = listener;
         callButton.addActionListener(listener);

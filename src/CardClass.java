@@ -3,6 +3,7 @@ public class CardClass implements java.io.Serializable {
     private int rank;
     private static final String IMAGE_PATH = "assets/cards/";
 
+    // initialize card
     public CardClass(String suit, int rank) {
         this.suit = suit;
         this.rank = rank;
@@ -25,6 +26,7 @@ public class CardClass implements java.io.Serializable {
         return IMAGE_PATH + rankString + "_of_" + suitString + ".png";
     }
 
+    // convert ranks to string so we can use to get images
     private String rankToString(int rank) {
         switch (rank) {
             case 11: return "jack";
